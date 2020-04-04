@@ -111,8 +111,9 @@ for %%I IN ("!cec_inparg!") do (
 setlocal ENABLEDELAYEDEXPANSION
 set "errMSG="!cec_inparg_nx!" is not a .!cec_cfgFiExt!-File."
 if /I "!cec_inparg_x!" NEQ ".!cec_cfgFiExt!" goto :ERR
-set "errMSG="!cec_inparg!" defines a dir - not a file."
-if /I "!cec_inparg_a:~0,1!" EQU "D" goto :ERR
+set "errMSG="!cec_inparg!" defines a dir - not a file (!cec_inparg_a!)."
+if /I "!cec_inparg_a:~0,1!" NEQ "-" goto :ERR
+REM if /I "!cec_inparg_a:~0,1!" EQU "D" goto :ERR
 set "errMSG="!cec_inparg!" defines not a single File (!cnt!)."
 if !cnt! NEQ 1 goto :ERR
 
@@ -150,24 +151,19 @@ if defined cfg_PathConExSB goto :gotPath
 		goto :ERR
 	)
 	set "ERL=25"
-	set "errMSG=The "ConanSandbox" path doesn't seem to exist.!errMSG!"
+	set "errMSG=The "ConanSandbox" path doesn't seem to exist.!CRLF!!WSC!"!cfg_PathConExSB!"!errMSG!"
 	if not exist "!cfg_PathConExSB!\." goto :ERR
 :gotPath
 
 
 
 REM   ----------- Check and/or modify vars set by the config file. ----------
-set "ERL=24"
 set "cec_InGameDefCfg=!cfg_PathConExSB!\Config\DefaultGame.ini"
 set "cec_InGameModList=!cfg_PathConExSB!\servermodlist.txt"
 set "cec_exe=!cfg_PathConExSB!\Binaries\Win64\ConanSandbox.exe"
-set "errMSG=Conans main executeable doesn't exist where it's supposed to be."
-if not exist "!cec_exe!" goto :ERR
-
 set "ERL=26"
-if defined cfg_ThisIP goto :gotIP
-set "errMSG=Neither cfg_ThisIP nor cfg_ThisFQDN were defined in '!cec_inparg_nx!'."
-if not defined cfg_ThisFQDN goto :ERR
+set "errMSG=Conans main executeable doesn't exist where it's supposed to be.!CRLF!!WSC!"!cec_exe!""
+if not exist "!cec_exe!" goto :ERR
 
 REM Check/set the process priority.
 set "ERL=27"
@@ -181,7 +177,7 @@ if not defined cfg_ThisPrio (
 :gotPrio
 
 if defined cfg_AutoRestart (
-	set "cfg_AutoRestart=-cfg_AutoRestart"
+	set "cfg_AutoRestart=-autorestart"
 ) else set "cfg_AutoRestart= "
 
 REM Create auto generated cfg_ThisModlist path+name.
@@ -190,16 +186,22 @@ if not defined cfg_ThisModlist set "cfg_ThisModlist=%~dp0.\cecModList - !cec_inp
 
 
 REM   ----------- Lookup the servers IP address from its FQDN ----------
-echo[
-echo[  --- Looking up the IP of "!cfg_ThisFQDN!" (this may take a few seconds).
-set "ERL=28"
-REM -type^=AAAA+A
-for /F "skip=2 tokens=1,2 delims=: " %%I IN ('nslookup.exe -timeout^=!cec_nsluTimeout! -type^=A "!cfg_ThisFQDN!" 2^>NUL') do if /I "%%~I" EQU "!cec_nsluAdrStr!" set "cfg_ThisIP=%%~J"
-set "errMSG=Couldn't find the IP address of '!cfg_ThisFQDN!' (cfg_ThisFQDN)."
-if not defined cfg_ThisIP goto :ERR
+if defined cfg_ThisIP goto :gotIP
+	set "ERL=28"
+	set "errMSG=Neither cfg_ThisIP nor cfg_ThisFQDN were defined in '!cec_inparg_nx!'."
+	if not defined cfg_ThisFQDN goto :ERR
 
-
+	echo[
+	echo[  --- Looking up the IP of "!cfg_ThisFQDN!" (this may take a bit).
+	set "ERL=29"
+	REM -type^=AAAA+A
+	for /F "skip=2 tokens=1,2 delims=: " %%I IN ('nslookup.exe -timeout^=!cec_nsluTimeout! -type^=A "!cfg_ThisFQDN!" 2^>NUL') do if /I "%%~I" EQU "!cec_nsluAdrStr!" set "cfg_ThisIP=%%~J"
+	set "errMSG=Couldn't find the IP address of '!cfg_ThisFQDN!' (cfg_ThisFQDN)."
+	if not defined cfg_ThisIP goto :ERR
 :gotIP
+
+
+
 REM   ----------- Check IP Address ----------
 REM Maybe rewrite with [0-9], [1-9][0-9], 1[0-9][0-9], 2[0-4][0-9], 25[0-5]
 REM FINDSTR /r "^[1-9][0-9]*$ ^0$"
@@ -214,7 +216,7 @@ for /F "tokens=1,2,3,4 delims=." %%I IN ("!cfg_ThisIP!") do (
 set "ERL=30"
 set "errMSG="
 for %%I IN (!IPpVars!) do if not defined %%~I (
-	set /A ERL+=1
+	set /A "ERL+=1"
 	set "errMSG=!errMSG!%%~I,"
 )
 set "errMSG='!cfg_ThisIP!' is not a legitimate IPv4 address. ^(!errMSG!^)"
@@ -226,7 +228,8 @@ if "!blargh!" NEQ "!cfg_ThisIP!" goto :ERR
 
 set "erl=35"
 set "cnt=4"
-for %%I IN (!IPpVars!) do if !%%~I! GEQ 0 if !%%~I! LEQ 255 set /A cnt-=1
+for %%I IN (!IPpVars!) do if !%%~I! GEQ 0 if !%%~I! LEQ 255 set /A "cnt-=1"
+set /A "ERL+=!cnt!"
 set "errMSG='!cfg_ThisIP!' is not a legitimate IP. !cnt! blocks are wrong."
 if !cnt! NEQ 0 goto :ERR
 
@@ -274,10 +277,10 @@ if defined cfg_KeepIntroClips (
 
 REM   ----------- Done with almost everything -> proceeding to start ConEx ----------
 echo[
-echo[  --- Showing connection data for !cfg_WaitDelay! seconds (press ctrl+c to cancel).
-echo[   ServerIP= "!cfg_ThisIP!"
-echo[   Password= "!cfg_ThisPwd!"
-set /A cfg_WaitDelay+=1
+echo[  --- Showing connection data for !cfg_WaitDelay!s (press ctrl+c to cancel).
+echo[!WSC!ServerIP= "!cfg_ThisIP!"
+echo[!WSC!Password= "!cfg_ThisPwd!"
+set /A "cfg_WaitDelay+=1"
 ping -n !cfg_WaitDelay! 127.0.0.1 > NUL
 REM  Removing the internal/"ingame" servermodlist is necessary to ensure the checks for changes below work under all conditions.
 set "errMSG=Couldn't remove internal ModList: "!cec_InGameModList!"
@@ -286,17 +289,18 @@ if exist "!cec_InGameModList!" goto :ERR
 echo[
 echo[  --- Starting Conan Exiles @!TIME!.
 powershell.exe write-host -fore Red -back yellow (' '+' '+' Do NOT close this window^^! '+' '+' ')
-echo[   After you quit Conan Exiles or it restarts itself this script checks for modlist updates.
+echo[!WSC!After you quit Conan Exiles or it restarts itself
+echo[!WSC!this script checks for modlist updates.
 
 for %%I IN ("!cec_exe!") do (
 	pushd "%%~dpI"
 	set "cec_exe=%%~nxI"
 )
 REM start ... /D "!cfg_PathConExSB!\Binaries\Win64" ... <- This doesn't work together with /!cfg_ThisPrio!
-start "%~nx0" /!cfg_ThisPrio! /WAIT "!cec_exe!" +connect !cfg_ThisIP! +password "!cfg_ThisPwd!" -modlist="!cfg_ThisModlist!" !cfg_AutoRestart!
+echo start "%~nx0" /!cfg_ThisPrio! /WAIT "!cec_exe!" +connect !cfg_ThisIP! +password "!cfg_ThisPwd!" -modlist="!cfg_ThisModlist!" !cfg_AutoRestart!
 set "ERL=!ERRORLEVEL!"
 echo[
-echo[   ... closed @!TIME! (ERL=!ERL!).
+echo[!WSC!... closed @!TIME! (ERL=!ERL!).
 popd[
 
 
@@ -304,8 +308,8 @@ REM   ----------- Post-game processing (check/update cfg_ThisModlist) ----------
 echo[
 echo[  --- Checking modlist for changes.
 if not exist "!cec_InGameModList!" (
-	echo[   No need to update.
-	goto :EOFi
+	echo[!WSC!No need to update.
+	goto :noChange
 )
 REM Check servermodlist.txt for differences
 REM set "modlistsAreDiff="
@@ -314,19 +318,20 @@ REM set "modlistsAreDiff=%ERRORLEVEL%"
 REM if not defined modlistsAreDiff goto :ERR
 REM if !modlistsAreDiff! EQU 0 goto :noChange
 	echo[
-	echo[   List was changed. Do you want to save those changes?
-	echo[   Do NOT do this if you've joined any other servers with different modlists
-	echo[   WITHOUT quiting Conan Exiles completly and answereing this question inbetween.
+	echo[!WSC!List was changed. Do you want to save those changes?
+	echo[!WSC!Do NOT do this if you've joined any other servers with different modlists
+	echo[!WSC!WITHOUT quiting Conan Exiles completly and answereing this question inbetween.
 	echo[
 	set "answer=n"
 	set /P "answer=Answer (yes/no, nothing=no, send with enter): "
 	if "!answer!" EQU "!answer:y=!" goto :noChange
 	REM moving the modified/newer internal modlist to cfg_ThisModlist
-	echo[
 	copy /D /V /Y "!cec_InGameModList!" "!cfg_ThisModlist!" >NUL
 	set "ERL=%ERRORLEVEL%"
 	set "errMSG=Overwriting the old with the new list failed.
 	if %ERL% NEQ 0 goto :ERR
+	echo[
+	echo[!WSC!New list succesfully saved.
 :noChange
 
 
@@ -345,18 +350,15 @@ echo[%WSC%!errMSG!
 echo[
 REM set /A ERL+=1
 :EOFi
-if "%cmdClose%"=="1" (
-	endlocal
-	exit /B %ERL%
-	exit
-)
-REM (If cmdClose==0) OR (if not defined cmdClose) -> pause
-if %ERL% EQU 0 title %title% - fin.
-echo[
-set /A cfg_WaitDelay*=2
-REM echo[  closing in ~!cfg_WaitDelay! seconds ...
-REM ping -n !cfg_WaitDelay! 127.0.0.1 > NUL
-pause
+if "%cmdClose%"=="1" goto :exit
+	REM (If cmdClose==0) OR (if not defined cmdClose) -> pause
+	if %ERL% EQU 0 title %title% - fin.
+	echo[
+	set /A "cfg_WaitDelay*=2"
+	REM echo[  closing in ~!cfg_WaitDelay! seconds ...
+	REM ping -n !cfg_WaitDelay! 127.0.0.1 > NUL
+	pause
+:exit
 endlocal
 exit /B %ERL%
 exit
