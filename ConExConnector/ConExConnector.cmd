@@ -297,11 +297,11 @@ for %%I IN ("!cec_exe!") do (
 	set "cec_exe=%%~nxI"
 )
 REM start ... /D "!cfg_PathConExSB!\Binaries\Win64" ... <- This doesn't work together with /!cfg_ThisPrio!
-echo start "%~nx0" /!cfg_ThisPrio! /WAIT "!cec_exe!" +connect !cfg_ThisIP! +password "!cfg_ThisPwd!" -modlist="!cfg_ThisModlist!" !cfg_AutoRestart!
+start "%~nx0" /!cfg_ThisPrio! /WAIT "!cec_exe!" +connect !cfg_ThisIP! +password "!cfg_ThisPwd!" -modlist="!cfg_ThisModlist!" !cfg_AutoRestart!
 set "ERL=!ERRORLEVEL!"
 echo[
 echo[!WSC!... closed @!TIME! (ERL=!ERL!).
-popd[
+popd
 
 
 REM   ----------- Post-game processing (check/update cfg_ThisModlist) ----------
@@ -319,11 +319,12 @@ REM if not defined modlistsAreDiff goto :ERR
 REM if !modlistsAreDiff! EQU 0 goto :noChange
 	echo[
 	echo[!WSC!List was changed. Do you want to save those changes?
-	echo[!WSC!Do NOT do this if you've joined any other servers with different modlists
-	echo[!WSC!WITHOUT quiting Conan Exiles completly and answereing this question inbetween.
+	echo[!WSC!Do NOT do this if you've joined any other servers
+	echo[!WSC!with different modlists WITHOUT quiting Conan Exiles
+	echo[!WSC!completly and answereing this question inbetween.
 	echo[
 	set "answer=n"
-	set /P "answer=Answer (yes/no, nothing=no, send with enter): "
+	set /P "answer=Answer (yes/no, nothing=no, press 'enter'): "
 	if "!answer!" EQU "!answer:y=!" goto :noChange
 	REM moving the modified/newer internal modlist to cfg_ThisModlist
 	copy /D /V /Y "!cec_InGameModList!" "!cfg_ThisModlist!" >NUL
