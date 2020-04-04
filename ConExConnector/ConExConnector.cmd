@@ -14,7 +14,7 @@ REM Win8	= 6.2
 set "ERRORLEVEL="
 
 REM  just title and version please
-set version=0.7_20200404
+set version=0.8_20200404
 set title=%~nx0 - Ver. %version%
 title %title%
 
@@ -109,7 +109,7 @@ for %%I IN ("!cec_inparg!") do (
 	set "cec_inparg_nx=%%~nxI"
 )
 setlocal ENABLEDELAYEDEXPANSION
-set "errMSG="!cec_inparg_nx!!cec_inparg_x!" is not a .!cec_cfgFiExt!-File."
+set "errMSG="!cec_inparg_nx!" is not a .!cec_cfgFiExt!-File."
 if /I "!cec_inparg_x!" NEQ ".!cec_cfgFiExt!" goto :ERR
 set "errMSG="!cec_inparg!" defines a dir - not a file."
 if /I "!cec_inparg_a:~0,1!" EQU "D" goto :ERR
@@ -131,7 +131,7 @@ if !ERL! NEQ 0 goto :ERR
 REM   ----------- Find the path to Steam & Conan Exiles. ----------
 set "ERL=22"
 if defined cfg_PathConExSB goto :gotPath
-	set "errMSG=!CRLF!!CRLF!!WSC!You may want to set the correct path manually in your '!cec_inparg_nx!'.!CRLF!!WSC!Look for "cfg_PathConExSB" in there."
+	set "errMSG=!CRLF!!CRLF!!WSC!You may want to set the correct path manually in '!cec_inparg_nx!'.!CRLF!!WSC!Look for "cfg_PathConExSB" in there."
 	for /F "usebackq tokens=3 skip=1" %%I IN (`reg.exe query "!cec_regPath!" /v "!cec_regVar!" 2^>NUL `) do set "cfg_PathConExSB=%%~I"
 	if not defined cfg_PathConExSB (
 		set "errMSG=Quering the registry for Steams path failed.!errMSG!"
@@ -166,7 +166,7 @@ if not exist "!cec_exe!" goto :ERR
 
 set "ERL=26"
 if defined cfg_ThisIP goto :gotIP
-set "errMSG=Neither cfg_ThisIP nor cfg_ThisFQDN were defined in your '!cec_inparg_nx!'."
+set "errMSG=Neither cfg_ThisIP nor cfg_ThisFQDN were defined in '!cec_inparg_nx!'."
 if not defined cfg_ThisFQDN goto :ERR
 
 REM Check/set the process priority.
@@ -240,7 +240,7 @@ if not defined cfg_ThisPort goto :gotPort
 	if "!cnt!" EQU "!cfg_ThisPort!" if !cnt! LEQ 65535 if !cnt! GTR 0 goto :gotPort
 	
 	set "ERL=10!cnt!"
-	set "errMSG=Someting is wrong with your port '!cfg_ThisPort!' (too small/big or NEQ !cnt!).
+	set "errMSG=Someting is wrong with the port defined in '!cfg_ThisPort!' (too small/big or NEQ !cnt!).
 	goto :ERR
 :gotPort
 
