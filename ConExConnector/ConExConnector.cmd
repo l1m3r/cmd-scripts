@@ -1,6 +1,6 @@
 @echo off
 REM  ---------- Just some preliminary stuff ------------
-set "WSC=   "
+set "WSC3=   "
 goto :os_chk
 REM OS check
 REM defines arch= -> 1=x86 2=x64 3=W6432  0=err
@@ -59,7 +59,7 @@ set "RunOrQuietRem=@"
 
 REM ----------------------- MAIN PROGRAMM ---------------------------
 
-REM  ---- MISSING:
+REM  ---- MISSING/TODO:
 REM   1. make sure OS is >= Win7
 REM   2. make sure conex isn't already running when we start it. -> tasklist.exe
 REM   3. 
@@ -90,7 +90,11 @@ setlocal DISABLEDELAYEDEXPANSION
 set "cec_inparg=%~1" & setlocal ENABLEDELAYEDEXPANSION
 
 set "ERL=20"
-set "errMSG=No config/input file defined. Usage: "%~nx0 ^<(Full)PathToFile^>"!CRLF!!CRLF!!WSC!Tip: Create a link to "%~nx0" for every CECcfg-file you use!CRLF!!WSC!     and edit each by attaching the full path to one of those CECcfg-files!CRLF!!WSC!     like in the usage example above."
+set "errMSG=No config/input file defined. Usage: "%~nx0 ^<(Full)PathToFile^>""
+set "errMSG=!errMSG!!CRLF!!CRLF!!WSC3!Tip: Create a link to "%~nx0" for every CECcfg-file you use"
+set "errMSG=!errMSG!!CRLF!!WSC3!     and edit each by attaching the full path to one of those CECcfg-files"
+set "errMSG=!errMSG!!CRLF!!WSC3!     like in the usage example above."
+set "errMSG=!errMSG!!CRLF!!WSC3!     Or just drag'n'drop the config on the script-file."
 if not defined cec_inparg goto :ERR
 REM COULD USE call :chkFiSysObj HERE
 set "errMSG=Couldn't find config/input file '!cec_inparg!'."
@@ -132,7 +136,7 @@ if !ERL! NEQ 0 goto :ERR
 REM   ----------- Find the path to Steam & Conan Exiles. ----------
 set "ERL=22"
 if defined cfg_PathConExSB goto :gotPath
-	set "errMSG=!CRLF!!CRLF!!WSC!You may want to set the correct path manually in '!cec_inparg_nx!'.!CRLF!!WSC!Look for "cfg_PathConExSB" in there."
+	set "errMSG=!CRLF!!CRLF!!WSC3!You may want to set the correct path manually in '!cec_inparg_nx!'.!CRLF!!WSC3!Look for "cfg_PathConExSB" in there."
 	for /F "usebackq tokens=3 skip=1" %%I IN (`reg.exe query "!cec_regPath!" /v "!cec_regVar!" 2^>NUL `) do set "cfg_PathConExSB=%%~I"
 	if not defined cfg_PathConExSB (
 		set "errMSG=Quering the registry for Steams path failed.!errMSG!"
@@ -141,17 +145,17 @@ if defined cfg_PathConExSB goto :gotPath
 	set "ERL=23"
 	set "cfg_PathConExSB=!cfg_PathConExSB:/=\!\SteamApps"
 	if not exist "!cfg_PathConExSB!\!cec_appM!" (
-		set "errMSG=Couldn't find "!cec_appM!" in "!cfg_PathConExSB!".!CRLF!!WSC!^(for now^) This script only works with Conan Exile in Steams default library folder.!errMSG!"
+		set "errMSG=Couldn't find "!cec_appM!" in "!cfg_PathConExSB!".!CRLF!!WSC3!^(for now^) This script only works with Conan Exile in Steams default library folder.!errMSG!"
 		goto :ERR
 	)
 	set "ERL=24"
 	for /F "usebackq tokens=1,*" %%I IN (`findstr.exe /R /I /C:"^		*\"installdir\"		*\"..*\"" "!cfg_PathConExSB!\!cec_appM!" 2^>NUL`) do set "ERL=0" & set "cfg_PathConExSB=!cfg_PathConExSB!\common\%%~J\ConanSandbox"
 	if !ERL! NEQ 0 (
-		set "errMSG=Couldn't find Conans path in "!cec_appM!".!CRLF!!WSC!Have you actually installed the game ^(through Steam^)?!errMSG!."
+		set "errMSG=Couldn't find Conans path in "!cec_appM!".!CRLF!!WSC3!Have you actually installed the game ^(through Steam^)?!errMSG!."
 		goto :ERR
 	)
 	set "ERL=25"
-	set "errMSG=The "ConanSandbox" path doesn't seem to exist.!CRLF!!WSC!"!cfg_PathConExSB!"!errMSG!"
+	set "errMSG=The "ConanSandbox" path doesn't seem to exist.!CRLF!!WSC3!"!cfg_PathConExSB!"!errMSG!"
 	if not exist "!cfg_PathConExSB!\." goto :ERR
 :gotPath
 
@@ -162,7 +166,7 @@ set "cec_InGameDefCfg=!cfg_PathConExSB!\Config\DefaultGame.ini"
 set "cec_InGameModList=!cfg_PathConExSB!\servermodlist.txt"
 set "cec_exe=!cfg_PathConExSB!\Binaries\Win64\ConanSandbox.exe"
 set "ERL=26"
-set "errMSG=Conans main executeable doesn't exist where it's supposed to be.!CRLF!!WSC!"!cec_exe!""
+set "errMSG=Conans main executeable doesn't exist where it's supposed to be.!CRLF!!WSC3!"!cec_exe!""
 if not exist "!cec_exe!" goto :ERR
 
 REM Check/set the process priority.
@@ -278,8 +282,8 @@ if defined cfg_KeepIntroClips (
 REM   ----------- Done with almost everything -> proceeding to start ConEx ----------
 echo[
 echo[  --- Showing connection data for !cfg_WaitDelay!s (press ctrl+c to cancel).
-echo[!WSC!ServerIP= "!cfg_ThisIP!"
-echo[!WSC!Password= "!cfg_ThisPwd!"
+echo[!WSC3!ServerIP= "!cfg_ThisIP!"
+echo[!WSC3!Password= "!cfg_ThisPwd!"
 set /A "cfg_WaitDelay+=1"
 ping -n !cfg_WaitDelay! 127.0.0.1 > NUL
 REM  Removing the internal/"ingame" servermodlist is necessary to ensure the checks for changes below work under all conditions.
@@ -289,8 +293,9 @@ if exist "!cec_InGameModList!" goto :ERR
 echo[
 echo[  --- Starting Conan Exiles @!TIME!.
 powershell.exe write-host -fore Red -back yellow (' '+' '+' Do NOT close this window^^! '+' '+' ')
-echo[!WSC!After you quit Conan Exiles or it restarts itself
-echo[!WSC!this script checks for modlist updates.
+title %title% & REM because the PS command overwrites the window-title.
+echo[!WSC3!After you quit Conan Exiles or it restarts itself
+echo[!WSC3!this script checks for modlist updates.
 
 for %%I IN ("!cec_exe!") do (
 	pushd "%%~dpI"
@@ -300,7 +305,7 @@ REM start ... /D "!cfg_PathConExSB!\Binaries\Win64" ... <- This doesn't work tog
 start "%~nx0" /!cfg_ThisPrio! /WAIT "!cec_exe!" +connect !cfg_ThisIP! +password "!cfg_ThisPwd!" -modlist="!cfg_ThisModlist!" !cfg_AutoRestart!
 set "ERL=!ERRORLEVEL!"
 echo[
-echo[!WSC!... closed @!TIME! (ERL=!ERL!).
+echo[!WSC3!... closed @!TIME! (ERL=!ERL!).
 popd
 
 
@@ -308,7 +313,7 @@ REM   ----------- Post-game processing (check/update cfg_ThisModlist) ----------
 echo[
 echo[  --- Checking modlist for changes.
 if not exist "!cec_InGameModList!" (
-	echo[!WSC!No need to update.
+	echo[!WSC3!No need to update.
 	goto :noChange
 )
 REM Check servermodlist.txt for differences
@@ -318,10 +323,10 @@ REM set "modlistsAreDiff=%ERRORLEVEL%"
 REM if not defined modlistsAreDiff goto :ERR
 REM if !modlistsAreDiff! EQU 0 goto :noChange
 	echo[
-	echo[!WSC!List was changed. Do you want to save those changes?
-	echo[!WSC!Do NOT do this if you've joined any other servers
-	echo[!WSC!with different modlists WITHOUT quiting Conan Exiles
-	echo[!WSC!completly and answereing this question inbetween.
+	echo[!WSC3!List was changed. Do you want to save those changes?
+	echo[!WSC3!Do NOT do this if you've joined any other servers
+	echo[!WSC3!with different modlists WITHOUT quiting Conan Exiles
+	echo[!WSC3!completly and answereing this question inbetween.
 	echo[
 	set "answer=n"
 	set /P "answer=Answer (yes/no, nothing=no, press 'enter'): "
@@ -332,7 +337,7 @@ REM if !modlistsAreDiff! EQU 0 goto :noChange
 	set "errMSG=Overwriting the old with the new list failed.
 	if %ERL% NEQ 0 goto :ERR
 	echo[
-	echo[!WSC!New list succesfully saved.
+	echo[!WSC3!New list succesfully saved.
 :noChange
 
 
@@ -347,7 +352,7 @@ echo[
 title %title% - ERROR (%ERL%)
 echo[
 echo[  ERROR (%ERL%):
-echo[%WSC%!errMSG!
+echo[%WSC3%!errMSG!
 echo[
 REM set /A ERL+=1
 :EOFi
