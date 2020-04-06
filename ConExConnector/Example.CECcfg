@@ -10,26 +10,28 @@
 | 3. The used servermodlist will be stored where the ConEexConnector is
 |    and it's name is derived from the name of the used CECcfg-file.
 |    -> don't modify the name of such files AFTER you've already used them.
+| 4. To unset/clear/empty a variable set it like this: set "VarName="
 | 
-| cfg_PathConExSB, [cfg_ThisPwd], (cfg_ThisFQDN | cfg_ThisIP), [cfg_ThisPort]
+| (cfg_ThisFQDN | cfg_ThisIP), [cfg_ThisPort], [cfg_ThisPwd], [cfg_useBE]
 |
 +----------------------------------------------------------------+
 
 
++--- Define FQDN or IP (IP takes priority!). ---+
+set "cfg_ThisFQDN=example.sub.domain.tld"
+set "cfg_ThisIP=192.168.123.45"
+set "cfg_ThisPort="		** can be left empty/unset if the servers uses the default port 7777.
+
 set "cfg_ThisPwd=<YourServersPassword>"
 
-+--- Define FQDN or IP (IP takes priority!). ---+
-set "cfg_ThisFQDN=sub.domain.tld"
-set "cfg_ThisIP=192.168.123.45"
 
-+--- Just the port please. ---+
-set "cfg_ThisPort="		** con be omitted if the servers uses the default port 7777.
+set "cfg_useBE="	** set this var to 'true' if the server uses BattleEye.
 
 
 +------ some optional options. ------+
 * set "cfg_PathConExSB=....\Steam\SteamApps\common\Conan Exiles\ConanSandbox"
-* set "cfg_ThisModlist=<Path\Filename>"		** ... to somewhere else where the modlist for this server shall be stored
-* set "cfg_WaitDelay=2"			** in ~seconds
+* set "cfg_ThisModlist=<Path\Filename>"		** ... to somewhere else where the modlist for this server shall be stored.
+* set "cfg_WaitDelay=2"			** in ~seconds.
 * set "cfg_KeepIntroClips=true"	** set this to anything if you don't want ConEx to skip the intro videos.
 * set "cfg_AutoRestart="		** ??? Uncomment/activate this line if you don't want ConEx to restart itself automatically when it generates a new servermodlist. ???
 * set "cfg_ThisPrio=NORMAL"		** Change the default priority from ABOVENORMAL to LOW, BELOWNORMAL, NORMAL, HIGH or REALTIME.

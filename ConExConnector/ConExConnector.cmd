@@ -14,7 +14,7 @@ REM Win8	= 6.2
 set "ERRORLEVEL="
 
 REM  just title and version please
-set version=0.8_20200404
+set version=0.9_20200406
 set title=%~nx0 - Ver. %version%
 title %title%
 
@@ -61,14 +61,15 @@ REM ----------------------- MAIN PROGRAMM ---------------------------
 
 REM  ---- MISSING/TODO:
 REM   1. make sure OS is >= Win7
-REM   2. make sure conex isn't already running when we start it. -> tasklist.exe
-REM   3. 
+REM   2. make sure this script and/or conex isn't already running when we start it. -> tasklist.exe
+REM   
 REM   N. several checks here and there (IPv6?, isConanFolderCorrect, ...).
 REM   N+1. IPv6 ?
 
 
 cd /D "%~dp0"
 REM   ----------- Some basic vars ----------
+set "allUsrVars=cfg_ThisFQDN cfg_ThisIP cfg_ThisPort cfg_ThisPwd cfg_useBE cfg_ThisPrio cfg_PathConExSB cfg_KeepIntroClips cfg_ThisModlist"
 set "cfg_AutoRestart=true"
 set "cfg_WaitDelay=4"
 set "cec_cfgFiExt=CECcfg"
@@ -122,7 +123,6 @@ set "errMSG="!cec_inparg!" defines not a single File (!cnt!)."
 if !cnt! NEQ 1 goto :ERR
 
 REM Clear all user variables.
-set "allUsrVars=cfg_PathConExSB cfg_KeepIntroClips cfg_ThisModlist cfg_ThisPwd cfg_ThisFQDN cfg_ThisIP cfg_ThisPort cfg_ThisPrio"
 for %%I IN (!allUsrVars!) do set "%%I="
 
 REM Parse the !cec_cfgFiExt!-File and import the defined variables.
@@ -165,6 +165,7 @@ REM   ----------- Check and/or modify vars set by the config file. ----------
 set "cec_InGameDefCfg=!cfg_PathConExSB!\Config\DefaultGame.ini"
 set "cec_InGameModList=!cfg_PathConExSB!\servermodlist.txt"
 set "cec_exe=!cfg_PathConExSB!\Binaries\Win64\ConanSandbox.exe"
+if defined cfg_useBE set "cec_exe=!cec_exe:~0,-4!_BE!cec_exe:~-4!" & REM Change normal exe to the one with BattleEye
 set "ERL=26"
 set "errMSG=Conans main executeable doesn't exist where it's supposed to be.!CRLF!!WSC3!"!cec_exe!""
 if not exist "!cec_exe!" goto :ERR
@@ -329,8 +330,8 @@ REM if !modlistsAreDiff! EQU 0 goto :noChange
 	echo[!WSC3!completly and answereing this question inbetween.
 	echo[
 	set "answer=n"
-	set /P "answer=Answer (yes/no, nothing=no, press 'enter'): "
-	if "!answer!" EQU "!answer:y=!" goto :noChange
+	set /P "answer=Answer (yes/no, nothing=no, press 'enter' to submit): "
+	if /I "!answer!" EQU "!answer:y=!" goto :noChange
 	REM moving the modified/newer internal modlist to cfg_ThisModlist
 	copy /D /V /Y "!cec_InGameModList!" "!cfg_ThisModlist!" >NUL
 	set "ERL=%ERRORLEVEL%"
