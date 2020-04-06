@@ -62,6 +62,8 @@ REM ----------------------- MAIN PROGRAMM ---------------------------
 REM  ---- MISSING/TODO:
 REM   1. make sure OS is >= Win7
 REM   2. make sure this script and/or conex isn't already running when we start it. -> tasklist.exe
+REM   3. enable drag'n'drop on the running script if no input file given as argument.
+REM   4. add argument parsing for ALL config options to enable usage without a config file.
 REM   
 REM   N. several checks here and there (IPv6?, isConanFolderCorrect, ...).
 REM   N+1. IPv6 ?
@@ -330,7 +332,7 @@ REM if !modlistsAreDiff! EQU 0 goto :noChange
 	echo[!WSC3!completly and answereing this question inbetween.
 	echo[
 	set "answer=n"
-	set /P "answer=Answer (yes/no, nothing=no, press 'enter' to submit): "
+	set /P "answer=Answer ([y]es/no, nothing=no, press 'enter' to submit): "
 	if /I "!answer!" EQU "!answer:y=!" goto :noChange
 	REM moving the modified/newer internal modlist to cfg_ThisModlist
 	copy /D /V /Y "!cec_InGameModList!" "!cfg_ThisModlist!" >NUL
