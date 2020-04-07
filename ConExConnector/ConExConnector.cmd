@@ -14,21 +14,21 @@ REM Win8	= 6.2
 set "ERRORLEVEL="
 
 REM  just title and version please
-set version=0.9_20200406
-set title=%~nx0 - Ver. %version%
-title %title%
+set "version=1.0_20200407"
+set "title=%~nx0 - Ver. %version%"
+(title !title!)
 
-set "ccl=%cmdcmdline%"
-set "ccl=%ccl:"=%"
+set "ccl=!cmdcmdline!"
+set "ccl=!ccl:"=!"
 
-REM Just once set cmdClose=1 to exit batch without another pause,
+REM Just once set finalPause=0 to exit script without another pause,
 REM if "/C" (execute and end) is not found in cmdcmdline.
-if not defined cmdClose if "%ccl%" EQU "%ccl:/C=%" (
-	set "cmdClose=1"
-) else set "cmdClose=0"
+if not defined finalPause if /I "!ccl!" EQU "!ccl:/C=!" (
+	set "finalPause=0"		& REM no /C in ccl.
+) else set "finalPause=1"	& REM /C was in ccl.
 
 REM Make sure unicode in/output is used.
-if "%ccl%" EQU "%ccl:/U=%" (
+if "!ccl!" EQU "!ccl:/U=!" if 1 EQU SkipThisUntilItsNeeded (
 	cmd.exe /U /E:ON /F:ON /V:ON /S /C "%~0 %*"
 	set "ERL=!ERRORLEVEL!"
 	exit /B !ERL!
@@ -61,9 +61,8 @@ REM ----------------------- MAIN PROGRAMM ---------------------------
 
 REM  ---- MISSING/TODO:
 REM   1. make sure OS is >= Win7
-REM   2. make sure this script and/or conex isn't already running when we start it. -> tasklist.exe
-REM   3. enable drag'n'drop on the running script if no input file given as argument.
-REM   4. add argument parsing for ALL config options to enable usage without a config file.
+REM   2. enable drag'n'drop on the running script if no input file given as argument.
+REM   3. add argument parsing for ALL config options to enable usage without a config file.
 REM   
 REM   N. several checks here and there (IPv6?, isConanFolderCorrect, ...).
 REM   N+1. IPv6 ?
@@ -80,11 +79,29 @@ set "cec_nsluAdrStr=address" & REM This may be language dependent (so far tested
 set "cec_nsluTimeout=10"
 set "cec_regPath=HKCU\Software\Valve\Steam"
 set "cec_regVar=SteamPath"
-set "cec_priorities=LOW BELOWNORMAL NORMAL ABOVENORMAL HIGH REALTIME"
 set "cec_appM=appmanifest_440900.acf"
+set "cec_priorities=LOW BELOWNORMAL NORMAL ABOVENORMAL HIGH REALTIME"
+set "cec_GameExe=ConansandBox.exe"
 (set CRLF=^
 %=this line is empty=%
 )
+
+
+
+REM   ----------- Check for other running instances of this scrip and/or ConEx ----------
+
+set /A "ERL=80"
+set "errMSG=Found at least one running instance Conan Exiles."
+tasklist.exe /FO csv /NH /FI "ImageName EQ !cec_GameExe!" | findstr.exe /I "!cec_GameExe!" >NUL && goto :ERR
+
+
+set /A "cnt=-1"
+for /F "usebackq tokens=1 delims=[]" %%I IN (`tasklist.exe /V /FO csv /NH /FI "ImageName EQ cmd.exe" ^| find.exe /N /I "!title!"`) do set /A "cnt+=1"
+set /A "ERL+=1+!cnt!"
+set "errMSG=Found !cnt! other running instance^(s^) of this script."
+if !cnt! NEQ 0 goto :ERR
+
+
 
 
 REM   ----------- Process the config file Argument ----------
@@ -166,7 +183,7 @@ if defined cfg_PathConExSB goto :gotPath
 REM   ----------- Check and/or modify vars set by the config file. ----------
 set "cec_InGameDefCfg=!cfg_PathConExSB!\Config\DefaultGame.ini"
 set "cec_InGameModList=!cfg_PathConExSB!\servermodlist.txt"
-set "cec_exe=!cfg_PathConExSB!\Binaries\Win64\ConanSandbox.exe"
+set "cec_exe=!cfg_PathConExSB!\Binaries\Win64\!cec_GameExe!"
 if defined cfg_useBE set "cec_exe=!cec_exe:~0,-4!_BE!cec_exe:~-4!" & REM Change normal exe to the one with BattleEye
 set "ERL=26"
 set "errMSG=Conans main executeable doesn't exist where it's supposed to be.!CRLF!!WSC3!"!cec_exe!""
@@ -182,6 +199,14 @@ if not defined cfg_ThisPrio (
 	set "errMSG=The valu '!cfg_ThisPrio!' set as priority in '!cec_inparg_nx!' is not allowed."
 	if !ERL! NEQ 0 goto :ERR
 :gotPrio
+
+set "ERL=27"
+set "errMSG="!cfg_WaitDelay!" is not an (allowed) number for 'cfg_WaitDelay'."
+if defined cfg_WaitDelay (
+	set /A "cfg_WaitDelay=!cfg_WaitDelay!"
+	if "!cfg_WaitDelay!" NEQ "%cfg_WaitDelay%" goto :ERR & REM only works in bracketed block.
+	if !cfg_WaitDelay! LSS 0 goto :ERR
+) else set "cfg_WaitDelay=0"
 
 if defined cfg_AutoRestart (
 	set "cfg_AutoRestart=-autorestart"
@@ -233,7 +258,7 @@ set "blargh=!ipp1!.!ipp2!.!ipp3!.!ipp4!"
 set "errMSG='!cfg_ThisIP!' is not a legitimate IPv4 address. ^(NEQ !blargh!^)"
 if "!blargh!" NEQ "!cfg_ThisIP!" goto :ERR
 
-set "erl=35"
+set "ERL=35"
 set "cnt=4"
 for %%I IN (!IPpVars!) do if !%%~I! GEQ 0 if !%%~I! LEQ 255 set /A "cnt-=1"
 set /A "ERL+=!cnt!"
@@ -264,20 +289,20 @@ if defined cfg_KeepIntroClips (
 	if not exist "!cec_InGameDefCfg!" goto :KeepIntroMovs
 	REM  Search for replaceable strings in DefGameCfg.
 	findstr.exe /B /R /I "^\+StartupMovies\= ^bWaitForMoviesToComplete\=True" "!cec_InGameDefCfg!" 
-	set "ERL=%ERRORLEVEL%" & REM should be =1 if none were and =0 if at least one was found.
+	set /A "ERL=41-1+!ERRORLEVEL!" & REM should be =1 if none were and =0 if at least one was found.
 	set "errMSG=Used findstr with wrong syntax."
-	if %ERL% GTR 1 goto :ERR
+	if !ERL! GTR 41 goto :ERR
 
 	REM Replace the strings in DefGameCfg.
-	if %ERL% EQU 1 (
+	if !ERL! EQU 41 (
 		REM No need to modify so reset ERL to 0.
 		set "ERL=0"
 		goto :KeepIntroMovs
 	)
 	powershell.exe -Command "(Get-Content -Path '!cec_InGameDefCfg!') -ireplace '^\+StartupMovies\=', '-StartupMovies='  -ireplace '^bWaitForMoviesToComplete\=.*$', 'bWaitForMoviesToComplete=False' | Out-File -encoding ASCII '!cec_InGameDefCfg!'"
-	set "ERL=!ERRORLEVEL!"
+	set /A "ERL=50+!ERRORLEVEL!"
 	set "errMSG=Failed to modify 'DefaultGame.ini'.
-	if %ERL% NEQ 0 goto :ERR
+	if !ERL! NEQ 50 goto :ERR
 :KeepIntroMovs
 
 
@@ -290,13 +315,14 @@ echo[!WSC3!Password= "!cfg_ThisPwd!"
 set /A "cfg_WaitDelay+=1"
 ping -n !cfg_WaitDelay! 127.0.0.1 > NUL
 REM  Removing the internal/"ingame" servermodlist is necessary to ensure the checks for changes below work under all conditions.
-set "errMSG=Couldn't remove internal ModList: "!cec_InGameModList!"
+set "errMSG=Couldn't remove internal ModList:!CRLF!!WSC3!"!cec_InGameModList!""
 del /F "!cec_InGameModList!" >NUL 2>&1
+set /A "ERL=60+%ERRORLEVEL%"
 if exist "!cec_InGameModList!" goto :ERR
 echo[
 echo[  --- Starting Conan Exiles @!TIME!.
 powershell.exe write-host -fore Red -back yellow (' '+' '+' Do NOT close this window^^! '+' '+' ')
-title %title% & REM because the PS command overwrites the window-title.
+(title %title%) & REM because the PS command overwrites the window-title.
 echo[!WSC3!After you quit Conan Exiles or it restarts itself
 echo[!WSC3!this script checks for modlist updates.
 
@@ -314,17 +340,19 @@ popd
 
 REM   ----------- Post-game processing (check/update cfg_ThisModlist) ----------
 echo[
-echo[  --- Checking modlist for changes.
+echo[  --- Checking for new modlist.
 if not exist "!cec_InGameModList!" (
+	REM  since we deleted the internal modlist before starting ConEx
+	REM  we can assume cfg_ThisModList was correct if no new internal on was created.
 	echo[!WSC3!No need to update.
-	goto :noChange
+	goto :waiter
 )
-REM Check servermodlist.txt for differences
-REM set "modlistsAreDiff="
-REM fc.exe /OFF "!cec_InGameModList!" "!cfg_ThisModlist!" >NUL 2>&1
-REM set "modlistsAreDiff=%ERRORLEVEL%"
-REM if not defined modlistsAreDiff goto :ERR
-REM if !modlistsAreDiff! EQU 0 goto :noChange
+	REM Check servermodlist.txt for differences
+	REM set "modlistsAreDiff="
+	REM fc.exe /OFF "!cec_InGameModList!" "!cfg_ThisModlist!" >NUL 2>&1
+	REM set "modlistsAreDiff=%ERRORLEVEL%"
+	REM if not defined modlistsAreDiff goto :ERR
+	REM if !modlistsAreDiff! EQU 0 goto :noChange
 	echo[
 	echo[!WSC3!List was changed. Do you want to save those changes?
 	echo[!WSC3!Do NOT do this if you've joined any other servers
@@ -336,12 +364,20 @@ REM if !modlistsAreDiff! EQU 0 goto :noChange
 	if /I "!answer!" EQU "!answer:y=!" goto :noChange
 	REM moving the modified/newer internal modlist to cfg_ThisModlist
 	copy /D /V /Y "!cec_InGameModList!" "!cfg_ThisModlist!" >NUL
-	set "ERL=%ERRORLEVEL%"
+	set /A "ERL=70+%ERRORLEVEL%"
 	set "errMSG=Overwriting the old with the new list failed.
-	if %ERL% NEQ 0 goto :ERR
-	echo[
-	echo[!WSC3!New list succesfully saved.
+	if %ERL% NEQ 70 goto :ERR
+		echo[
+		echo[!WSC3!New list succesfully saved.
+	:waiter
+		REM  Wait a bit before quitting if there were no changes OR the new list was saved.
+		set /A "cfg_WaitDelay+=2"
+		echo[!WSC3!Closing in ~!cfg_WaitDelay! seconds.
+		ping -n !cfg_WaitDelay! 127.0.0.1 >NUL 2>&1
+	goto :noChange
 :noChange
+REM  all non-error outcomes of the modlist checker don't need to pause before quitting.
+set "finalPause=0"
 
 
 goto :EOFi
@@ -352,22 +388,19 @@ REM ------------ Subroutines not belonging to the 'real' script follow here. ---
 
 :ERR
 echo[
-title %title% - ERROR (%ERL%)
+(title !title! - ERROR: %ERL%)
 echo[
-echo[  ERROR (%ERL%):
+echo[  --- ERROR (%ERL%):
 echo[%WSC3%!errMSG!
 echo[
 REM set /A ERL+=1
 :EOFi
-if "%cmdClose%"=="1" goto :exit
-	REM (If cmdClose==0) OR (if not defined cmdClose) -> pause
-	if %ERL% EQU 0 title %title% - fin.
+if "%finalPause%"=="0" goto :finQuit
+	REM (If finalPause==1) OR (if not defined finalPause) -> pause
+	if %ERL% EQU 0 (title !title! - fin.)
 	echo[
-	set /A "cfg_WaitDelay*=2"
-	REM echo[  closing in ~!cfg_WaitDelay! seconds ...
-	REM ping -n !cfg_WaitDelay! 127.0.0.1 > NUL
 	pause
-:exit
+:finQuit
 endlocal
 exit /B %ERL%
 exit
@@ -381,7 +414,7 @@ if "%OS%"=="Windows_NT" goto :isWinNT
 echo[
 echo[   The OS is not a version of Windows NT.
 pause
-exit /b
+exit /B
 exit
 :isWinNT
 VERIFY OTHER 2>nul
