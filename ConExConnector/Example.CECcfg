@@ -12,17 +12,17 @@
 |    -> don't modify the name of such files AFTER you've already used them.
 | 4. To unset/clear/empty a variable set it like this: set "VarName="
 | 
-| (cfg_ThisFQDN | cfg_ThisIP), [cfg_ThisPort], [cfg_ThisPwd], [cfg_useBE]
+| (cfg_ThisFQDN | cfg_ThisIP), [cfg_ThisPort], [cfg_ThisPwd], [cfg_useBE], ...
 |
 +----------------------------------------------------------------+
 
 
-+--- Define FQDN or IP (IP takes priority!). ---+
-set "cfg_ThisFQDN=example.sub.domain.tld"
-set "cfg_ThisIP=192.168.123.45"
++--- Uncomment and define either FQDN or IPv4 address (IP takes priority!). ---+
+* set "cfg_ThisFQDN=example.sub.domain.tld"
+* set "cfg_ThisIP=1.2.3.4"
 set "cfg_ThisPort="		** can be left empty/unset if the servers uses the default port 7777.
 
-set "cfg_ThisPwd=<YourServersPassword>"
+* set "cfg_ThisPwd=<YourServersPassword>"
 
 
 set "cfg_useBE="	** set this var to 'true' if the server uses BattleEye.
