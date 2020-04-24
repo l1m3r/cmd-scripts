@@ -4,7 +4,7 @@
 | 1. Only lines in this format are parsed:
 |    set "cec_VarName=<varContent>"
 |    With regex: ^set "..*=.*"
-|    Everything after the second " is a comments and gets ignored.
+|    Everything after the second " is a comment and gets ignored.
 | 2. Characters like " ! % ^ & in VarNames & -content may cause
 |    problems and can NOT be used (or need to be escaped).
 | 3. The used servermodlist will be stored where the ConEexConnector is
