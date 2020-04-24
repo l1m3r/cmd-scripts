@@ -14,7 +14,7 @@ REM Win8	= 6.2
 set "ERRORLEVEL="
 
 REM  just title and version please
-set "version=1.0_20200407"
+set "version=1.0.1_20200425"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -225,9 +225,13 @@ if defined cfg_ThisIP goto :gotIP
 
 	echo[
 	echo[  --- Looking up the IP of "!cfg_ThisFQDN!" (this may take a bit).
-	set "ERL=29"
 	REM -type^=AAAA+A
-	for /F "skip=2 tokens=1,2 delims=: " %%I IN ('nslookup.exe -timeout^=!cec_nsluTimeout! -type^=A "!cfg_ThisFQDN!" 2^>NUL') do if /I "%%~I" EQU "!cec_nsluAdrStr!" set "cfg_ThisIP=%%~J"
+	for /F "skip=2 tokens=1,2 delims=: " %%I IN ('nslookup.exe -timeout^=!cec_nsluTimeout! -type^=A "!cfg_ThisFQDN!" 2^>NUL') do (
+		set "blargh=%%~I"
+		if defined blargh if /I "!blargh!" NEQ "!blargh:%cec_nsluAdrStr%=!" set "cfg_ThisIP=%%~J"
+		set "blargh="
+	)
+	set "ERL=29"
 	set "errMSG=Couldn't find the IP address of '!cfg_ThisFQDN!' (cfg_ThisFQDN)."
 	if not defined cfg_ThisIP goto :ERR
 :gotIP
@@ -301,7 +305,7 @@ if defined cfg_KeepIntroClips (
 	)
 	powershell.exe -Command "(Get-Content -Path '!cec_InGameDefCfg!') -ireplace '^\+StartupMovies\=', '-StartupMovies='  -ireplace '^bWaitForMoviesToComplete\=.*$', 'bWaitForMoviesToComplete=False' | Out-File -encoding ASCII '!cec_InGameDefCfg!'"
 	set /A "ERL=50+!ERRORLEVEL!"
-	set "errMSG=Failed to modify 'DefaultGame.ini'.
+	set "errMSG=Failed to modify 'DefaultGame.ini'."
 	if !ERL! NEQ 50 goto :ERR
 :KeepIntroMovs
 
