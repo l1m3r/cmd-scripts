@@ -14,7 +14,7 @@ REM Win8	= 6.2
 set "ERRORLEVEL="
 
 REM  just title and version please
-set "version=1.0.1_20200425"
+set "version=1.0.2_20200623"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -70,7 +70,7 @@ REM   N+1. IPv6 ?
 
 cd /D "%~dp0"
 REM   ----------- Some basic vars ----------
-set "allUsrVars=cfg_ThisFQDN cfg_ThisIP cfg_ThisPort cfg_ThisPwd cfg_useBE cfg_ThisPrio cfg_PathConExSB cfg_KeepIntroClips cfg_ThisModlist"
+set "allUsrVars=cfg_ThisFQDN cfg_ThisIP cfg_ThisPort cfg_ThisPwd cfg_useBE cfg_ThisPrio cfg_PathConExSB cfg_KeepIntroClips cfg_ThisModlist cfg_NoSilentEvents"
 set "cfg_AutoRestart=true"
 set "cfg_WaitDelay=4"
 set "cec_cfgFiExt=CECcfg"
@@ -212,6 +212,11 @@ if defined cfg_AutoRestart (
 	set "cfg_AutoRestart=-autorestart"
 ) else set "cfg_AutoRestart= "
 
+if defined cfg_NoSilentEvents (
+	set "cfg_NoSilentEvents=-DisableSilentEvents"
+) else set "cfg_NoSilentEvents= "
+
+
 REM Create auto generated cfg_ThisModlist path+name.
 if not defined cfg_ThisModlist set "cfg_ThisModlist=%~dp0.\cecModList - !cec_inparg_n!.txt"
 
@@ -335,7 +340,8 @@ for %%I IN ("!cec_exe!") do (
 	set "cec_exe=%%~nxI"
 )
 REM start ... /D "!cfg_PathConExSB!\Binaries\Win64" ... <- This doesn't work together with /!cfg_ThisPrio!
-start "%~nx0" /!cfg_ThisPrio! /WAIT "!cec_exe!" +connect !cfg_ThisIP! +password "!cfg_ThisPwd!" -modlist="!cfg_ThisModlist!" !cfg_AutoRestart!
+start "%~nx0" /!cfg_ThisPrio! /WAIT "!cec_exe!" -serverconnect "!cfg_ThisIP!" -serverpwd "!cfg_ThisPwd!" -modlist="!cfg_ThisModlist!" !cfg_AutoRestart! !cfg_NoSilentEvents!
+REM Pre 20200616: start "%~nx0" /!cfg_ThisPrio! /WAIT "!cec_exe!" +connect "!cfg_ThisIP!" +password "!cfg_ThisPwd!" -modlist="!cfg_ThisModlist!" !cfg_AutoRestart!
 set "ERL=!ERRORLEVEL!"
 echo[
 echo[!WSC3!... closed @!TIME! (ERL=!ERL!).

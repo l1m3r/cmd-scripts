@@ -25,7 +25,7 @@ set "cfg_ThisPort="		** can be left empty/unset if the servers uses the default 
 * set "cfg_ThisPwd=<YourServersPassword>"
 
 
-set "cfg_useBE="	** set this var to 'true' if the server uses BattleEye.
+* set "cfg_useBE=true"	** Uncomment/activate this line if you use BattleEye.
 
 
 +------ some optional options. ------+
@@ -35,3 +35,4 @@ set "cfg_useBE="	** set this var to 'true' if the server uses BattleEye.
 * set "cfg_KeepIntroClips=true"	** set this to anything if you don't want ConEx to skip the intro videos.
 * set "cfg_AutoRestart="		** ??? Uncomment/activate this line if you don't want ConEx to restart itself automatically when it generates a new servermodlist. ???
 * set "cfg_ThisPrio=NORMAL"		** Change the default priority from ABOVENORMAL to LOW, BELOWNORMAL, NORMAL, HIGH or REALTIME.
+* set "cfg_NoSilentEvents=true"	** ???
