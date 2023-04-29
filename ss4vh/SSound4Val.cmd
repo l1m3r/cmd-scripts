@@ -20,7 +20,6 @@ for %%I IN (%sfkURL%) do set "exeSFK=%%~nxI"
 
 set "SS4VH_regPath=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970"
 set "SS4VH_regVar=InstallLocation"
-set "SS4VH_appM=appmanifest_892970.acf"
 set "path_sub=valheim_Data\globalgamemanagers"
 
 set "s2f= hit at offset 0x"
@@ -103,7 +102,7 @@ set "cnt_spk="
 for %%I IN (%chan_nmbrs%) do (
 	set "cnt_lHits=0"
 	::#  search file "path_sub" for HEX-string and count hits.
-	for /F "usebackq" %%J in (`%exeSFK% hexfind "!VH_Path!" -binary /%hex_lead%%%~nI%hex_tail%/ ^| findstr.exe /N /C:"%s2f%"`) do set /A "cnt_lHits+=1
+	for /F "usebackq" %%J in (`%exeSFK% hexfind "!VH_Path!" -binary /%hex_lead%%%~nI%hex_tail%/ ^| findstr.exe /N /C:"%s2f%"`) do set /A "cnt_lHits+=1"
 	
 	::#  generate and store results in vars.
 	if !cnt_lHits! GTR 0 (
@@ -188,7 +187,7 @@ goto :EOFi
 
 
 
-REM ------------ Subroutines not belonging to the 'real' script follow here. ------------------
+::# ------------ Subroutines not belonging to the 'real' script follow here. ------------------
 
 :ERR
 echo[
@@ -211,9 +210,8 @@ exit /B %ERL%
 
 
 
-
 :prog_find
-REM  Check if all required programms are available.
+::#  Check if all required programms are available.
 set "errMSG=The return goto marker of "prog_find" is missing."
 if not defined prog_find_ret goto :ERR
 set "prog_missing="
