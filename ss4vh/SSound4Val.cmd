@@ -1,6 +1,5 @@
 @echo off
-setlocal ENABLEEXTENSIONS
-setlocal ENABLEDELAYEDEXPANSION
+setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
 set "version=0.1.0_20230429"
 set "title=%~nx0 - Ver. %version%"
@@ -212,9 +211,6 @@ exit /B %ERL%
 
 
 
-
-REM call :prog_find pathVarN "progs2find" rtnVarN [0=noPath, only pathVarN]
-exit /B %ERL%
 
 :prog_find
 REM  Check if all required programms are available.
