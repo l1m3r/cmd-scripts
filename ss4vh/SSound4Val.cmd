@@ -18,11 +18,11 @@ if not defined finalPause if /I "!ccl!" EQU "!ccl:/C=!" (
 set "sfkURL=http://stahlworks.com/dev/sfk/sfk.exe"
 for %%I IN (%sfkURL%) do set "exeSFK=%%~nxI"
 
-set "SS4VH_regPath=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970"
-set "SS4VH_regVar=InstallLocation"
+set "VH_regPath=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970"
+set "VH_regVar=InstallLocation"
 set "path_sub=valheim_Data\globalgamemanagers"
 
-set "s2f= hit at offset 0x"
+set "string2count= hit at offset 0x"
 
 set "chan_nmbrs=2 4 5 6 8 "
 set "hex_lead=0000803F0"
@@ -54,7 +54,7 @@ if not defined prog_missing goto :READY
 	echo[ #
 	echo[ #            THIS MAY BE UNSAFE ^^!^^!^^!
 	echo[ #   because
-	echo[ #   - the file will not be verified here.
+	echo[ #   - "%exeSFK%" will not be verified here.
 	echo[ #   - it could be replaced with malware.
 	echo[ #   - the URL is susceptible to MITM attacks.
 	echo[ #
@@ -82,7 +82,7 @@ if not defined prog_missing goto :READY
 
 ::#  Read VH's installation path from Windows's registry.
 set "VH_Path="
-for /F "usebackq tokens=3 skip=1" %%I IN (`reg.exe query "!SS4VH_regPath!" /v "!SS4VH_regVar!" 2^>NUL `) do set "VH_Path=%%~I"
+for /F "usebackq tokens=3 skip=1" %%I IN (`reg.exe query "!VH_regPath!" /v "!VH_regVar!" 2^>NUL `) do set "VH_Path=%%~I"
 if not defined VH_Path (
 	set "ERL=20"
 	set "errMSG=Quering the registry for Steams VH path failed."
@@ -97,34 +97,34 @@ if not exist "!VH_Path!" (
 )
 
 ::# Enumerate current number of configured speakers and make sure patching is at least "kinda safe".
-set "cnt_tHits="
+set "cnt_HitsTotal="
 set "cnt_spk="
 for %%I IN (%chan_nmbrs%) do (
-	set "cnt_lHits=0"
+	set "cnt_HitsLocal=0"
 	::#  search file "path_sub" for HEX-string and count hits.
-	for /F "usebackq" %%J in (`%exeSFK% hexfind "!VH_Path!" -binary /%hex_lead%%%~nI%hex_tail%/ ^| findstr.exe /N /C:"%s2f%"`) do set /A "cnt_lHits+=1"
+	for /F "usebackq" %%J in (`%exeSFK% hexfind "!VH_Path!" -binary /%hex_lead%%%~nI%hex_tail%/ ^| findstr.exe /N /C:"%string2count%"`) do set /A "cnt_HitsLocal+=1"
 	
 	::#  generate and store results in vars.
-	if !cnt_lHits! GTR 0 (
-		set "cnt_tHits=!cnt_tHits!+!cnt_lHits!"
-		REM set /A "cnt_lHits*=%%~nI"
-		set "cnt_spk=!cnt_spk!+%%~nI*!cnt_lHits!"
+	if !cnt_HitsLocal! GTR 0 (
+		set "cnt_HitsTotal=!cnt_HitsTotal!+!cnt_HitsLocal!"
+		REM set /A "cnt_HitsLocal*=%%~nI"
+		set "cnt_spk=!cnt_spk!+%%~nI*!cnt_HitsLocal!"
 	)
-	REM echo[ spkL="%%~I" --- cnt_lHits=!cnt_lHits! --- cnt_tHits=!cnt_tHits! --- cnt_spk=!cnt_spk!
+	REM echo[ spkL="%%~I" --- cnt_HitsLocal=!cnt_HitsLocal! --- cnt_HitsTotal=!cnt_HitsTotal! --- cnt_spk=!cnt_spk!
 )
-set "cnt_lHits="
+set "cnt_HitsLocal="
 
 ::#  summarize the results.
-set /A cnt_tHitsS=!cnt_tHits!
+set /A cnt_HitsTotalS=!cnt_HitsTotal!
 set /A cnt_spkS=!cnt_spk!
 
-if !cnt_tHitsS! NEQ 1 (
+if !cnt_HitsTotalS! NEQ 1 (
 	set ERL=22
-	set "errMSG=Didn't find exactly one location to patch ^(#=!cnt_tHitsS! [!cnt_spk!]^)."
+	set "errMSG=Didn't find exactly one location to patch ^(#=!cnt_HitsTotalS! [!cnt_spk!]^)."
 	goto :ERR
 )
 
-::#  Remove the current configured # of speakers for the list of valid #s.
+::#  Remove the current configured # of speakers from the list of valid #s.
 set "chan_nmbrs=!chan_nmbrs:%cnt_spkS% =!"
 
 set "cnt_spkN="
@@ -165,6 +165,7 @@ echo[
 echo[ ##################################################
 echo[ #
 echo[ #  Does everything look alright up there ^^^^ ?
+echo[ #  Will only eactly one position/byte be modified?
 echo[ #  If not press CTRL+C now.
 echo[ #
 echo[ ##################################################
@@ -206,7 +207,6 @@ if "%finalPause%"=="0" goto :finQuit
 :finQuit
 endlocal
 exit /B %ERL%
-
 
 
 
