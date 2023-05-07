@@ -1,7 +1,7 @@
 @echo off
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-set "version=0.1.0_20230429"
+set "version=0.1.1_20230507"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -47,7 +47,8 @@ if not defined prog_missing goto :READY
 	if /I "%prog_missing%" NEQ "%exeSFK%" goto :ERR
 	echo[ ################## ATTENTION #####################
 	echo[ #
-	echo[ #   This script will now download "%exeSFK%" from
+	echo[ #   This script will now download the 3rd party
+	echo[ #   program "%exeSFK%" from
 	echo[ #   %sfkURL%
 	echo[ #   and use/execute(^^!) it to read/patch/modify
 	echo[ #   VH's ".\%path_sub%"
@@ -56,7 +57,7 @@ if not defined prog_missing goto :READY
 	echo[ #   because
 	echo[ #   - "%exeSFK%" will not be verified here.
 	echo[ #   - it could be replaced with malware.
-	echo[ #   - the URL is susceptible to MITM attacks.
+	echo[ #   - the DL URL is susceptible to MITM attacks.
 	echo[ #
 	echo[ #   If you're not comfortable with this
 	echo[ #   press CTRL+C now, download it manually into

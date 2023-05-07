@@ -1,4 +1,3 @@
-
 # ConExConnector.cmd - the Conan Exiles (server) Connector
 
 Join your favorite servers directly with the correct list of mods and let this script keep track of said 'modlist.txt'.
@@ -34,7 +33,7 @@ __still2do__
 
 - Copy `Example.CECcfg` and fill that copy with the necessary information for one server.
 - drag'n'drop CECcfg file on the cmd-script to open it.
-OR
+  OR
 - create link to cmd-script and add the path to CECcfg.
 
 ---
@@ -46,12 +45,12 @@ OR
   It only keeps track of the modlist __after__ it was created/modified by Conan Exiles, so Conan still restarts itself the first time you connect and once every time the server changed it's modlist.
 - If your Conan isn't in the default Steam-library folder this script will most likely not find it and you'd need to set the proper path in your config files.
 
-
 ---
 
 ## Notes
 
 The script
+
 - is untested with BattleEye since I don't use it.
 - may depend on the OS language to work. So far it seems to work in English and German Windows without modifications.
 - has only been tested a bit on Windows 8.1 and 10.
@@ -62,14 +61,15 @@ The script
 
 - Let me know if it works with BattleEye and with other Windows languages.
 
-
 ### Step 1
 
 - **Option 1**
-    - 🍴 Fork this repo!
+  
+  - 🍴 Fork this repo!
 
 - **Option 2**
-    - 👯 Clone this repo to your local machine.
+  
+  - 👯 Clone this repo to your local machine.
 
 ### Step 2
 
@@ -79,13 +79,11 @@ The script
 
 - 🔃 Create a new [pull request](https://github.com/l1m3r/cmd-scripts/compare/).
 
-
 ---
 
 ## FAQ
 
 No Q&As so far.
-
 
 ---
 
