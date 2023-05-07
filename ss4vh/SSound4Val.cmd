@@ -36,6 +36,8 @@ set "progPath=%~dp0"
 set "pf_tmpath=!progPath!"
 set requiredPrograms=findstr.exe reg.exe powershell.exe %exeSFK%
 
+call :log "Searching for required programs."
+
 set "ERL=0"
 ::# Find/check up on required Programs in %requiredPrograms%
 if not defined requiredPrograms goto :prog_find_ret
@@ -80,6 +82,8 @@ if not defined prog_missing goto :READY
 	)
 :READY
 
+call :log " -> Found all required programs."
+call :log "Fetching VH's installation path from Windows's registry."
 
 ::#  Read VH's installation path from Windows's registry.
 set "VH_Path="
@@ -89,6 +93,7 @@ if not defined VH_Path (
 	set "errMSG=Quering the registry for Steams VH path failed."
 	goto :ERR
 )
+call :log " -> Found it: %VH_Path%"
 set "VH_Path=%VH_Path%\%path_sub%"
 
 if not exist "!VH_Path!" (
@@ -98,12 +103,14 @@ if not exist "!VH_Path!" (
 )
 
 ::# Enumerate current number of configured speakers and make sure patching is at least "kinda safe".
+call :log "Searching for valid HEX-strings."
 set "cnt_HitsTotal="
 set "cnt_spk="
 for %%I IN (%chan_nmbrs%) do (
 	set "cnt_HitsLocal=0"
 	::#  search file "path_sub" for HEX-string and count hits.
 	for /F "usebackq" %%J in (`%exeSFK% hexfind "!VH_Path!" -binary /%hex_lead%%%~nI%hex_tail%/ ^| findstr.exe /N /C:"%string2count%"`) do set /A "cnt_HitsLocal+=1"
+	call :log " -> Found !cnt_HitsLocal! hits for %%I speakers."
 	
 	::#  generate and store results in vars.
 	if !cnt_HitsLocal! GTR 0 (
@@ -210,9 +217,15 @@ endlocal
 exit /B %ERL%
 
 
+:log
+setlocal
+set "bla=%~1"
+echo[INFO: !bla!
+endlocal & exit /b
+
 
 :prog_find
-::#  Check if all required programms are available.
+::#  Check if all required programs are available.
 set "errMSG=The return goto marker of "prog_find" is missing."
 if not defined prog_find_ret goto :ERR
 set "prog_missing="
@@ -231,7 +244,7 @@ for %%I IN (%requiredPrograms%) do (
 	if !lERL! NEQ 0 (
 		set /A ERL+=1
 		set prog_missing=%%~I
-		set "errMSG=Required programm "%%~I" could not be found."
+		set "errMSG=Required program "%%~I" could not be found."
 		set lERL=0
 	)
 )

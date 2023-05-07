@@ -1,6 +1,6 @@
 # SSound4Val.cmd - Surround sound for Valheim
 
-Choose and change Valheim's surround sound configuration between 2, 4, 4+1=5, 5+1=6 and 8 speakers.
+Choose and change Valheim's surround sound configuration between 2, 4, 5=4+1, 6=5+1 and 8 speakers.
 
 Tags: 
 
@@ -19,13 +19,14 @@ Tags:
 
 Optionally:
 
-* This script can download the required 3rd party program [sfk.exe](http://www.stahlworks.com/swiss-file-knife.html) on its own but you can download and [check/verify](https://www.virustotal.com/gui/file/41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7/detection/f-41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7-1683457704)(v1.9.8.2) it separately if you don't trust it.
+* This script can download the required 3rd party program [sfk.exe](http://www.stahlworks.com/swiss-file-knife.html) on its own but you can download and [check/verify](https://www.virustotal.com/gui/file/41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7/detection/f-41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7-1683457704)(v1.9.8.2) it separately if you don't trust it (save it in the same folder).
 
 ---
 
 ## Limitations
 
-- So far this script requires the correct path to Valheim to be stored in `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970\InstallLocation`. Other options (drag'n'drop, etc.) are not specifically planned but possible future features.
+- So far this script requires Valheim's full path to be stored in Windows's registry @ `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970\InstallLocation` (where it is usually stored anyway).
+  Other options (drag'n'drop, etc.) are not specifically planned but possible future features.
 
 ---
 
@@ -40,7 +41,7 @@ The script
 
 Further reading / documentation / information:
 
-* [Official feature request](https://valheimbugs.featureupvote.com/suggestions/271742/enable-surround-sound-51-71).
+* Iron Gate's / Valheim's [Official feature request](https://valheimbugs.featureupvote.com/suggestions/271742/enable-surround-sound-51-71).
 
 * Steam forum - [5.1 Surround Sound in Valheim?](https://steamcommunity.com/app/892970/discussions/2/3409804177167822291/)
 
