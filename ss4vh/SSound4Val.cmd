@@ -7,7 +7,7 @@ set "CRLFs=?"
 )
 
 ::#  just title and version
-set "version=0.1.3_20230508"
+set "version=0.1.4_20230508"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -43,7 +43,7 @@ cd /D "%~dp0"
 
 call :log "Searching for required programs."
 ::# ---- Variables required for prog_find
-set _requiredPrograms=findstr.exe reg.exe powershell.exe %exeSFK%
+set _requiredPrograms=findstr.exe reg.exe pwsh.exe %exeSFK%
 
 set "ERL=0"
 set "prog_missing="
@@ -81,7 +81,7 @@ if not defined prog_missing goto :READY
 	pause
 	
 	::#  exeSFK is missing -> downloading it to the current directory
-	set "exePS+A=powershell.exe -nologo -noprofile -command"
+	set "exePS+A=pwsh.exe -nologo -noprofile -command"
 	set "exePS_PPSC=$ProgressPreference = 'SilentlyContinue'"
 	%exePS+A% "%exePS_PPSC%; Invoke-WebRequest '%sfkURL%' -OutFile '%exeSFK%'"
 	set "ERL=%ERRORLEVEL%"
@@ -111,7 +111,7 @@ if not defined inp goto :searchPaths
 	
 	if %ERL% EQU 1 if %inp_size% GTR 1 if not defined inp_ext if /I "!inp_name!" EQU "%file2mod%" if "%inp_attr:~1,1%" EQU "-" goto :readHex
 	::# ELSE
-	set "errMSG=Your argument "!inp!" didn't meet all conditions:!CRLF_! ? cnt: %ERL% EQU 1!CRLF_! ? size=%inp_size%!CRLF_! ? ext="%inp_ext%" EQU ""!CRLF_! ? name: "!inp_name!" EQU "%file2mod%"!CRLF_! ? read-only: %inp_attr:~1,1% EQU -"
+	set "errMSG=Your argument!CRLF_! "!inp!"!CRLF_!didn't meet all conditions:!CRLF_! ? cnt: %ERL% EQU 1!CRLF_! ? size=%inp_size%!CRLF_! ? ext="%inp_ext%" EQU ""!CRLF_! ? name: "!inp_name!" EQU "%file2mod%"!CRLF_! ? read-only: %inp_attr:~1,1% EQU -"
 	set "ERL=51"
 goto :ERR
 
@@ -147,7 +147,7 @@ goto :ERR
 	set "errMSG=!CRLF_!"
 	set "VH_Path="
 	for %%I IN (%psblLocations%) do (
-		set "errMSG=!errMSG!%%~I!CRLF_!"
+		set "errMSG=!errMSG! %%~I!CRLF_!"
 		for %%J IN (inp_full inp_ext inp_size inp_attr) do if defined %%~J set "%%~J="
 		
 		call :chkFiSysObj "%%~I\%path_sub%" inp_full nul nul nul inp_ext inp_size inp_attr nul

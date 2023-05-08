@@ -25,8 +25,7 @@ Optionally:
 
 ## Limitations
 
-- So far this script requires Valheim's full path to be stored in Windows's registry @ `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970\InstallLocation` (where it is usually stored anyway).
-  Other options (drag'n'drop, etc.) are not specifically planned but possible future features.
+- only works on Windows...
 
 ---
 
