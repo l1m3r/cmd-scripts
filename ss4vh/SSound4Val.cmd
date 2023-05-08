@@ -7,7 +7,7 @@ set "CRLFs=?"
 )
 
 ::#  just title and version
-set "version=0.1.2_20230508"
+set "version=0.1.3_20230508"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -39,9 +39,7 @@ set "chan_nmbrs=2 4 5 6 8 "
 set "hex_lead=0000803F0"
 set "hex_tail=0000000000000000040000"
 
-
 cd /D "%~dp0"
-
 
 call :log "Searching for required programs."
 ::# ---- Variables required for prog_find
@@ -100,7 +98,7 @@ call :log " -> Found all required programs."
 set "inp="
 set "inp=%~1"
 ::#  Parse argument %1
-if not defined inp goto :readReg
+if not defined inp goto :searchPaths
 	call :log "processing argument #1="!inp!""
 	if "!inp!" NEQ "%~1" (
 		set "ERL=50"
@@ -119,24 +117,51 @@ goto :ERR
 
 
 ::#  Read VH's installation path from Windows's registry.
-:readReg
-	call :log "Fetching VH's installation path from Windows's registry."
+:searchPaths
+	call :log "Looking for VH's "%file2mod%" (standard + fetched blindly from registry)."
+	
+	set "fldrVH=steamapps\common\Valheim"
+	set psblLocations="%ProgramFiles%\Steam\%fldrVH%" "%ProgramFiles(x86)%\Steam\%fldrVH%"
+	
+	::# Fetch VH's direct path
 	set "VH_Path="
-	set "errMSG=!CRLF_! -> Try drag'n'dropping the file ".\%path_sub%"!CRLF_!    on "%~nx0" instead.!CRLF_!    (but NOT on the open cmd shell window^!^)"
-	for /F "usebackq tokens=3 skip=2" %%I IN (`reg.exe query "!VH_regPath!" /v "!VH_regVar!"`) do set "VH_Path=%%~I"
-	if not defined VH_Path (
-		set "errMSG=Quering the registry for Steams VH path failed.!errMSG!"
+	call :ReadReg VH_Path "!VH_regPath!" "!VH_regVar!"
+	if defined VH_Path set psblLocations=%psblLocations% "%VH_Path%"
+	
+	::# Fetch Steam's path and add VH's subfolder.
+	set "regKey2=HKLM\SOFTWARE\Wow6432Node\Valve\Steam"
+	for %%I IN ("%regKey2%" "%regKey2:Wow6432Node\=%") do (
+		set "VH_Path="
+		call :ReadReg VH_Path "%%~I" "InstallPath"
+		if defined VH_Path set psblLocations=!psblLocations! "!VH_Path!\%fldrVH%"
+	)
+	::# Fetch Steam's path from Windows's 'uninstall' and add VH's subfolder.
+	set "regKey3=HKLM\SOFTWARE\Wow6432Node\Microsoft\Windows\CurrentVersion\Uninstall\Steam"
+	for %%I IN ("%regKey3%" "%regKey3:Wow6432Node\=%") do (
+		set "VH_Path="
+		call :ReadReg VH_Path "%%~I" "UninstallString"
+		if defined VH_Path for %%J IN ("!VH_Path!") do set psblLocations=!psblLocations! "%%~dpJ%fldrVH%"
+	)
+	
+	::# Search all possible standard locations for %file2mod%.
+	set "errMSG=!CRLF_!"
+	set "VH_Path="
+	for %%I IN (%psblLocations%) do (
+		set "errMSG=!errMSG!%%~I!CRLF_!"
+		for %%J IN (inp_full inp_ext inp_size inp_attr) do if defined %%~J set "%%~J="
+		
+		call :chkFiSysObj "%%~I\%path_sub%" inp_full nul nul nul inp_ext inp_size inp_attr nul
+		set "ERL=!ERRORLEVEL!"
+		if !ERL! EQU 1 if !inp_size! GTR 1 if not defined inp_ext if "!inp_attr:~1,1!" EQU "-" (
+			call :log " -> Found @ "!inp_full!""
+			set "VH_Path=!inp_full!"
+		)
+	)
+	if defined VH_Path goto :readHex
+	REM else
+		set "errMSG=Couldn't find ".\%path_sub%" in any of the 'normal' locations:!errMSG!!CRLF_! -> Try drag'n'dropping the file "%file2mod%"!CRLF_!    on "%~nx0" instead.!CRLF_!    (but NOT on the open cmd shell window^!^)"
 		set "ERL=20"
-		goto :ERR
-	)
-	call :log " -> Found it: %VH_Path%"
-	set "VH_Path=%VH_Path%\%path_sub%"
-
-	if not exist "!VH_Path!" (
-		set "ERL=21"
-		set "errMSG=VH's game folder doesn't contain the file ".\!path_sub!"!errMSG!"
-		goto :ERR
-	)
+	goto :ERR
 
 
 ::# Enumerate current number of configured speakers and make sure patching is at least "kinda safe".
@@ -259,28 +284,56 @@ endlocal & exit /B %ERL%
 :log
 setlocal
 set "bla=%~1"
-echo[INFO: !bla!
+echo[+INFO: !bla!
 endlocal & exit /b
 
 
 
 
-REM ---------- Begin ProgFind
-REM
-REM  ProgFind must be used like this:
-REM    call :ProgFind 1"<path(s)>" 2rtnVar 3programs/files [4to [5look [6for ...]]]
-REM  Requires:
-REM     "<path(s)>" This is a ;-separated list of paths (like the %path% variable).
-REM     rtnVar      The names of missing files will be stored in the variable with this name.
-REM     %%3 - %%*   These are the programs/files to look for.
-REM  Returns/Sets:
-REM     rtnVar    unless it was set to "nul".
-REM     errMSG    only if ERL NEQ 0
-REM  Errorlevel:
-REM      >= 1     # file(s) could not be found.
-REM         0     All files were found.
-REM     <= -1     An error occurred.
-REM
+::# ---------- Begin ReadReg
+::#
+::#  ProgFind must be used like this:
+::#    call :ProgFind 1rtnVar 2regPath 3regEntry
+::#  Requires:
+::#     rtnVar      The names of missing files will be stored in the variable with this name.
+::#  Returns/Sets:
+::#     rtnVar    unless it was set to "nul".
+::#  Errorlevel:	????
+::#
+:ReadReg
+setlocal
+	set "mod_rtn="
+	for /F "usebackq tokens=2* skip=2" %%I IN (`reg.exe query "%~2" /v "%~3"`) do set "mod_rtn=%%~J"
+	set "mod_ERL=%ERRORLEVEL%"
+::# Clear all local vars ...
+endlocal &(
+	REM ... except the required ones.
+	REM if %mod_ERL% GTR 0 
+		if /I "%~1" NEQ "NUL" if "%mod_rtn%" NEQ "" set "%~1=%mod_rtn%"
+	REM  else if %mod_ERL% LSS 0 set "errMSG=%mod_errMSG%"
+	exit /B %mod_ERL%
+)
+::# ---------- End ReadReg
+
+
+
+
+::# ---------- Begin ProgFind
+::#
+::#  ProgFind must be used like this:
+::#    call :ProgFind 1"<path(s)>" 2rtnVar 3programs/files [4to [5look [6for ...]]]
+::#  Requires:
+::#     "<path(s)>" This is a ;-separated list of paths (like the %path% variable).
+::#     rtnVar      The names of missing files will be stored in the variable with this name.
+::#     %%3 - %%*   These are the programs/files to look for.
+::#  Returns/Sets:
+::#     rtnVar    unless it was set to "nul".
+::#     errMSG    only if ERL NEQ 0
+::#  Errorlevel:
+::#      >= 1     # file(s) could not be found.
+::#         0     All files were found.
+::#     <= -1     An error occurred.
+::#
 :ProgFind
 	SETLOCAL EnableDelayedExpansion EnableExtensions
 	if "%~n0" EQU "ProgFind" call :varset
@@ -388,23 +441,23 @@ endlocal &(
 	) else if %mod_ERL% LSS 0 set "errMSG=%mod_errMSG%"
 	exit /B %mod_ERL%
 )
-REM ---------- End ProgFind
+::# ---------- End ProgFind
 
 
 
 
-REM ---------- Begin Check-File-System-Object
-REM Usage:
-REM call :chkFiSysObj <obj>, 1full, 2drive, 3path, 4name, 5ext, 6size, 7attr, 8time
-REM Unused variables between used ones must/can be set to "nul"
-REM return-value = ERL = isFile
-REM   >1	(cnt-1) Object(s) found with placeholders in %~1.
-REM    1	Obj is a file.
-REM    0	Obj is a directory.
-REM   -1	Obj does not exist.
-REM   -2	placeholders in %~1 and no fitting files(!) found. no vars defined.
-REM   -3	forbidden chars in %~1.
-REM if not defined (6, 7 or 8) -> object does not exist.
+::# ---------- Begin Check-File-System-Object
+::# Usage:
+::# call :chkFiSysObj <obj>, 1full, 2drive, 3path, 4name, 5ext, 6size, 7attr, 8time
+::# Unused variables between used ones must/can be set to "nul"
+::# return-value = ERL = isFile
+::#   >1	(cnt-1) Object(s) found with placeholders in %~1.
+::#    1	Obj is a file.
+::#    0	Obj is a directory.
+::#   -1	Obj does not exist.
+::#   -2	placeholders in %~1 and no fitting files(!) found. no vars defined.
+::#   -3	forbidden chars in %~1.
+::# if not defined (6, 7 or 8) -> object does not exist.
 
 :chkFiSysObj
 SETLOCAL EnableDelayedExpansion EnableExtensions
@@ -529,4 +582,4 @@ endlocal &(
 	) 2>nul else set "errMSG=%errMSG%"
 	exit /B %mod_ERL%
 )
-REM ---------- End Check-File-System-Object
+::# ---------- End Check-File-System-Object
