@@ -27,6 +27,7 @@ set "RunOrQuietRem=@"
 
 set "sfkURL=http://stahlworks.com/dev/sfk/sfk.exe"
 for %%I IN (%sfkURL%) do set "exeSFK=%%~nxI"
+set "pwrSH=powershell.exe"
 
 set "VH_regPath=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970"
 set "VH_regVar=InstallLocation"
@@ -43,7 +44,7 @@ cd /D "%~dp0"
 
 call :log "Searching for required programs."
 ::# ---- Variables required for prog_find
-set _requiredPrograms=findstr.exe reg.exe pwsh.exe %exeSFK%
+set _requiredPrograms=findstr.exe reg.exe %pwrSH% %exeSFK%
 
 set "ERL=0"
 set "prog_missing="
@@ -62,7 +63,7 @@ if not defined prog_missing goto :READY
 	echo[ #
 	echo[ #   This script will now download the 3rd party
 	echo[ #   program "%exeSFK%" from
-	echo[ #   %sfkURL%
+	echo[ #    %sfkURL%
 	echo[ #   and use/execute(^^!) it to read/patch/modify
 	echo[ #   VH's file "%file2mod%"
 	echo[ #
@@ -81,7 +82,7 @@ if not defined prog_missing goto :READY
 	pause
 	
 	::#  exeSFK is missing -> downloading it to the current directory
-	set "exePS+A=pwsh.exe -nologo -noprofile -command"
+	set "exePS+A=%pwrSH% -nologo -noprofile -command"
 	set "exePS_PPSC=$ProgressPreference = 'SilentlyContinue'"
 	%exePS+A% "%exePS_PPSC%; Invoke-WebRequest '%sfkURL%' -OutFile '%exeSFK%'"
 	set "ERL=%ERRORLEVEL%"
@@ -154,6 +155,7 @@ goto :ERR
 		set "ERL=!ERRORLEVEL!"
 		if !ERL! EQU 1 if !inp_size! GTR 1 if not defined inp_ext if "!inp_attr:~1,1!" EQU "-" (
 			call :log " -> Found @ "!inp_full!""
+			if defined VH_Path if /I "!VH_Path!" NEQ "!inp_full!" echo[ --------------- FOUND A DIFFERENT LOCATION^!^! ^(this is WiP, ignore it^).
 			set "VH_Path=!inp_full!"
 		)
 	)
@@ -292,12 +294,12 @@ endlocal & exit /b
 
 ::# ---------- Begin ReadReg
 ::#
-::#  ProgFind must be used like this:
-::#    call :ProgFind 1rtnVar 2regPath 3regEntry
+::#  ReadReg must be used like this:
+::#    call :ReadReg 1rtnVar 2regPath 3regEntry
 ::#  Requires:
-::#     rtnVar      The names of missing files will be stored in the variable with this name.
+::#     ... all three args required ...
 ::#  Returns/Sets:
-::#     rtnVar    unless it was set to "nul".
+::#     rtnVar    Value of the requested reg-key will be stored here.
 ::#  Errorlevel:	????
 ::#
 :ReadReg
