@@ -1,6 +1,6 @@
 # SSound4Val.cmd - Surround sound for Valheim
 
-Choose and change Valheim's surround sound configuration between 2, 4, 5=4+1, 6=5+1 and 8 speakers.
+Choose and change Valheim's surround sound configuration to your hearts desire.
 
 Tags: 
 
@@ -17,15 +17,31 @@ Tags:
 - Download the latest master branch [SSound4Val.cmd](https://github.com/l1m3r/cmd-scripts/raw/master/ss4vh/SSound4Val.cmd) (right click, *save as*).
 - Run it & follow the instructions.
 
-Optionally:
+**Optionally:**
 
-* This script can download the required 3rd party program [sfk.exe](http://www.stahlworks.com/swiss-file-knife.html) on its own but you can download and [check/verify](https://www.virustotal.com/gui/file/41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7/detection/f-41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7-1683457704)(v1.9.8.2) it separately if you don't trust it (save it in the same folder).
+* This script can download the required 3rd party program [sfk.exe](http://stahlworks.com/dev/sfk/sfk.exe) on its own but you can download and [check/verify](https://www.virustotal.com/gui/file/41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7/detection/f-41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7-1683457704)(v1.9.8.2) it separately if you don't trust it (save it in the same folder).
+
+---
+
+## How it works
+
+This script uses [Swiss File Knife](http://www.stahlworks.com/swiss-file-knife.html) to modify half-a-byte in the file `...\Valheim\valheim_Data\globalgamemanagers` (no extension). It replaces Valheim's default value of "2" for Unity's [AudioSpeakerMode](https://docs.unity3d.com/ScriptReference/AudioSpeakerMode.html) with 4, 5, 6 or 8 for the respective number of speakers (4, 5, 5.1, 7.1). That's it.
+
+Alternatively one can
+
+- use [UABEA](https://github.com/nesrak1/UABEA) to edit the file directly (but for some reason leave a few more bytes modified).
+
+- use any hex-editor to modify it manually (see the *source* for a *usable* hex search string).
+
+- find a way to get IronGate to just enabled surround sound support in VH which existed since its first release (at least).
 
 ---
 
 ## Limitations
 
 - only works on Windows...
+- every update to VH seems to replace the relevant file. -> need to apply the patch after every update.
+- My hex search string has worked flawlessly at least with all VH versions between January and May 2023 but there's no guaranty it will keep doing so in the future.
 
 ---
 
