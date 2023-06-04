@@ -92,6 +92,14 @@ No Q&As so far.
 
 ---
 
+## Legal
+
+As far as I can tell nothing in this project and nothing I did to produce it violates any law or license (copyright, IP, EULA).
+
+And it seems to me like it would fall under "fair use" anyway because the *purposes is interoperability*(!) between Valheim and any setup with more than two speakers. Or to [correct](https://www.lexology.com/library/detail.aspx?g=f5b1193c-f423-4f96-bca5-03f5145ecf15) [errors](https://uk.practicallaw.thomsonreuters.com/w-030-8064?contextData=(sc.Default)&transitionType=Default&firstPage=true).
+
+---
+
 ## License
 
-see LICENSE.md in the root folder of this repo.
+see [LICENSE.md](../LICENSE.md) in the root folder of this repo.
