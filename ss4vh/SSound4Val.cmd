@@ -155,7 +155,7 @@ goto :ERR
 		set "ERL=!ERRORLEVEL!"
 		if !ERL! EQU 1 if !inp_size! GTR 1 if not defined inp_ext if "!inp_attr:~1,1!" EQU "-" (
 			call :log " -> Found @ "!inp_full!""
-			if defined VH_Path if /I "!VH_Path!" NEQ "!inp_full!" echo[ --------------- FOUND A DIFFERENT LOCATION^!^! ^(this is WiP, ignore it^).
+			if defined VH_Path if /I "!VH_Path!" NEQ "!inp_full!" echo[ --------------- FOUND A DIFFERENT LOCATION^!^! ^(this is WiP, please let me know about it.^)
 			set "VH_Path=!inp_full!"
 		)
 	)
@@ -345,7 +345,7 @@ endlocal &(
 	%RemOrVerbRun% echo[
 	%RemOrVerbRun% echo[  ---- %mod_Name% begin
 	set "mod_ERL=-1"
-	REM Check %1 - paths
+	::# Check %1 - paths
 	set "mod_paths="
 	set "mod_paths=%~1"
 	if not defined mod_paths (
@@ -353,8 +353,8 @@ endlocal &(
 		%RemOrVerbRun% echo[  -- Error: !mod_errMSG!
 		goto :ProgFind_End
 	)
-	REM TBD? - Check paths for illegal Chars?
-	REM Check %2 - rtnVarName
+	::# TBD? - Check paths for illegal Chars?
+	::# Check %2 - rtnVarName
 	set "mod_tmp="
 	set "mod_tmp=%~2"
 	if not defined mod_tmp (
@@ -362,7 +362,7 @@ endlocal &(
 		%RemOrVerbRun% echo[  -- Error: !mod_errMSG!
 		goto :ProgFind_End
 	)
-	REM Remove every allowed char.
+	::# Remove every allowed char.
 	for %%A IN (!AllowedVarChars!) do for /F "tokens=1" %%B IN ("%%~A") do if defined mod_tmp (
 		set "mod_tmp=!mod_tmp:%%~B=!"
 	)
@@ -373,10 +373,10 @@ endlocal &(
 		goto :ProgFind_End
 	)
 
-	REM TBD? check other inputs... %*
-	REM read params %3 ... programs/files [to [look [for]]]
+	::# TBD? check other inputs... %*
+	::# read params %3 ... programs/files [to [look [for]]]
 
-	REM  main 'for' loop to look for files/programs
+	::#  main 'for' loop to look for files/programs
 	set "mod_pMissing= "
 	set mod_#Missing=0
 	set lERL=0
@@ -413,9 +413,9 @@ endlocal &(
 		)
 	)
 	set /A mod_cnt-=2
-	REM Remove trailing "  "
+	::# Remove trailing "  "
 	set "mod_pMissing=!mod_pMissing:~0,-2!"
-	REM Check if the 'for' loop did sth. - post check of %3....
+	::# Check if the 'for' loop did sth. - post check of %3....
 	set /A mod_ERL-=1
 	if %mod_cnt% LSS 1 (
 		set "mod_errMSG=%mod_Name% - program(s)/file(s) to look for not or improperly defined (%%3..)."
@@ -435,7 +435,7 @@ endlocal &(
 		echo[  -- searched for %mod_cnt% programs/files. %mod_#Missing% are missing.
 		echo[  ---- %mod_Name% end.
 	)
-REM Clear all local vars ...
+::# Clear all local vars ...
 endlocal &(
 	REM ... except the required ones.
 	if %mod_ERL% GTR 0 (
@@ -473,7 +473,7 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
 	%RemOrVerbRun% echo[
 	%RemOrVerbRun% echo[ ---- %mod_Name% begin - %*
 
-	REM Check %1 - Obj
+	::# Check %1 - Obj
 	set "mod_Obj="
 	set "mod_Obj=%~1"
 	if not defined mod_Obj (
@@ -483,7 +483,7 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
 		goto :chkFiSysObj_End
 	)
 
-	REM Cleanup input Obj
+	::# Cleanup input Obj
 	set "mod_Obj=!mod_Obj:&=!"
 	set "mod_Obj=!mod_Obj:|=!"
 	set "mod_Obj=!mod_Obj:>=!"
@@ -496,7 +496,7 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
 		goto :chkFiSysObj_End
 	)
 
-	REM read params 1-8, ignore empty ones and those that are NUL
+	::# read params 1-8, ignore empty ones and those that are NUL
 	set "mod_String= "
 	set mod_tmp=1
 	:loop
@@ -513,9 +513,9 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
 		goto :loop
 	:loop_end
 
-	REM Remove last whitespace
+	::# Remove last whitespace
 	set "mod_String=!mod_String:~0,-1!"
-	REM Remove every allowed char.
+	::# Remove every allowed char.
 	if defined mod_string for %%A IN (!AllowedVarChars!) do if defined mod_string set "mod_String=!mod_String:%%~A=!"
 	if defined mod_String (
 		REM only illegal chars left
@@ -525,7 +525,7 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
 		goto :chkFiSysObj_End
 	)
 
-	REM the actual chkfisysobj operation.
+	::# the actual chkfisysobj operation.
 	set "mod_ERL=0"
 	for %%I IN ("!mod_Obj!") do (
 		set /A mod_ERL+=1
@@ -538,7 +538,7 @@ SETLOCAL EnableDelayedExpansion EnableExtensions
 		set "mod_r7_Atr=%%~aI"
 		set "mod_r8_DTS=%%~tI"
 	) 2>nul
-	REM set mod_ERL= return-value / isFile
+	::# set mod_ERL= return-value / isFile
 	if %mod_ERL% EQU 0 (
 		REM no files found.
 		%RemOrVerbRun% echo[ ---- %~0 - no file^(s^) found, no vars defined.
@@ -569,7 +569,7 @@ if "!RemOrDebugRun!" NEQ "!RemOrDebugRun:@=!" (
 
 %RemOrVerbRun% echo[ ---- %mod_Name% end.
 
-REM Clear all local vars ...
+::# Clear all local vars ...
 endlocal &(
 	REM ... except the required ones.
 	if %mod_ERL% GEQ -2 (
