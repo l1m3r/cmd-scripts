@@ -2,13 +2,12 @@
 
 Choose and change Valheim's surround sound configuration to your hearts desire.
 
-Tags: 
-
 ---
 
 ## Features
 
 - Reads Valheim's current speaker configuration and lets you change it.
+- If it can't find the file to patch you can drag'n'drop it manually on the script file(!) instead.
 
 ---
 
@@ -19,13 +18,13 @@ Tags:
 
 **Optionally:**
 
-* This script can download the required 3rd party program [sfk.exe](http://stahlworks.com/dev/sfk/sfk.exe) on its own but you can download and [check/verify](https://www.virustotal.com/gui/file/41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7/detection/f-41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7-1683457704)(v1.9.8.2) it separately if you don't trust it (save it in the same folder).
+* This script can download the required 3rd party program [sfk.exe](http://stahlworks.com/dev/sfk/sfk.exe) on its own but you can download and [check/verify](https://www.virustotal.com/gui/file/41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7/detection/f-41a48f6219888e35f0e56f6f97fd2c960eb4c1fe8ed1434a62cc22ee21e107c7-1683457704)(v1.9.8.2) it separately if you don't trust it (save it in the same folder or anywhere in `%PATH%`).
 
 ---
 
 ## How it works
 
-This script uses [Swiss File Knife](http://www.stahlworks.com/swiss-file-knife.html) to modify half-a-byte in the file `...\Valheim\valheim_Data\globalgamemanagers` (no extension). It replaces Valheim's default value of "2" for Unity's [AudioSpeakerMode](https://docs.unity3d.com/ScriptReference/AudioSpeakerMode.html) with 4, 5, 6 or 8 for the respective number of speakers (4, 5, 5.1, 7.1). That's it.
+This script uses [Swiss File Knife](http://www.stahlworks.com/swiss-file-knife.html) to modify half-a-byte in the file `...\Valheim\valheim_Data\globalgamemanagers` (no extension). It replaces Valheim's default value of "*2*" for Unity's [AudioSpeakerMode](https://docs.unity3d.com/ScriptReference/AudioSpeakerMode.html) with *4*, *5*, *6* or *8* for the respective number of speakers (4, 5, 5.1, 7.1). That's it.
 
 Alternatively one can
 
@@ -33,14 +32,14 @@ Alternatively one can
 
 - use any hex-editor to modify it manually (see the *source* for a *usable* hex search string).
 
-- find a way to get IronGate to just enabled surround sound support in VH which existed since its first release (at least).
+- find a way to [get IronGate to just enabled surround sound](https://valheimbugs.featureupvote.com/suggestions/271742/enable-surround-sound-51-71) support in VH which existed since its first release (at least).
 
 ---
 
 ## Limitations
 
 - only works on Windows...
-- every update to VH seems to replace the relevant file. -> need to apply the patch after every update.
+- every update to VH seems to replace the relevant file. -> need to apply the patch after every update (maybe a *proper* mod using BepInEx would be better).
 - My hex search string has worked flawlessly at least with all VH versions between January and May 2023 but there's no guaranty it will keep doing so in the future.
 
 ---
@@ -94,7 +93,7 @@ No Q&As so far.
 
 ## Legal
 
-As far as I can tell nothing in this project and nothing I did to produce it violates any law or license (copyright, IP, EULA).
+As far as I can tell nothing in this project and nothing I did to produce it violates any law or license (copyright, IP, EULA, etc.).
 
 And it seems to me like it would fall under "fair use" anyway because the *purposes is interoperability*(!) between Valheim and any setup with more than two speakers. Or to [correct](https://www.lexology.com/library/detail.aspx?g=f5b1193c-f423-4f96-bca5-03f5145ecf15) [errors](https://uk.practicallaw.thomsonreuters.com/w-030-8064?contextData=(sc.Default)&transitionType=Default&firstPage=true).
 
@@ -103,3 +102,7 @@ And it seems to me like it would fall under "fair use" anyway because the *purpo
 ## License
 
 see [LICENSE.md](../LICENSE.md) in the root folder of this repo.
+
+---
+
+Tags: mod, modification, patch, hack, 3D
