@@ -7,7 +7,7 @@ set "CRLFs=?"
 )
 
 ::#  just title and version
-set "version=0.1.4_20230508"
+set "version=0.1.5_20230607"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -33,6 +33,7 @@ set "VH_regPath=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam A
 set "VH_regVar=InstallLocation"
 set "file2mod=globalgamemanagers"
 set "path_sub=valheim_Data\%file2mod%"
+set "VH_exe=valheim.exe"
 
 set "string2count= hit at offset 0x"
 
@@ -44,7 +45,7 @@ cd /D "%~dp0"
 
 call :log "Searching for required programs."
 ::# ---- Variables required for prog_find
-set _requiredPrograms=findstr.exe reg.exe %pwrSH% %exeSFK%
+set _requiredPrograms=findstr.exe reg.exe tasklist.exe %pwrSH% %exeSFK%
 
 set "ERL=0"
 set "prog_missing="
@@ -95,6 +96,22 @@ if not defined prog_missing goto :READY
 :READY
 
 call :log " -> Found all required programs."
+
+
+::#   ----------- Check for other running instances of this scrip and/or Valheim ----------
+set /A "ERL=80"
+set "errMSG=Found at least one running instance "!VH_exe!"."
+tasklist.exe /FO csv /NH /FI "ImageName EQ !VH_exe!" | findstr.exe /I "!VH_exe!" >NUL && goto :ERR
+
+
+set /A "cnt=-1"
+for /F "usebackq tokens=1 delims=[]" %%I IN (`tasklist.exe /V /FO csv /NH /FI "ImageName EQ cmd.exe" ^| find.exe /N /I "!title!"`) do set /A "cnt+=1"
+set /A "ERL+=!cnt!"
+set "errMSG=Found !cnt! other running instance^(s^) of "%~nx0"."
+if !cnt! NEQ 0 goto :ERR
+
+
+::#   ----------- Main script ----------
 
 set "inp="
 set "inp=%~1"
