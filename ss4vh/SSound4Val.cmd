@@ -7,7 +7,7 @@ set "CRLFs=?"
 )
 
 ::#  just title and version
-set "version=0.1.5_20230607"
+set "version=0.2.1_20231116"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -35,11 +35,12 @@ set "file2mod=globalgamemanagers"
 set "path_sub=valheim_Data\%file2mod%"
 set "VH_exe=valheim.exe"
 
-set "string2count= hit at offset 0x"
-
 set "chan_nmbrs=2 4 5 6 8 "
 set "hex_lead=0000803F0"
 set "hex_tail=0000000000000000040000"
+REM                                                  1 -> 0
+set "hex_PhyInp=803f000000000200000009000000080000000"
+
 
 cd /D "%~dp0"
 
@@ -188,10 +189,12 @@ goto :ERR
 	call :log "Searching for valid HEX-strings."
 	set "cnt_HitsTotal="
 	set "cnt_spk="
+
 	for %%I IN (%chan_nmbrs%) do (
 		set "cnt_HitsLocal=0"
 		::#  search file "path_sub" for HEX-string and count hits.
-		for /F "usebackq" %%J in (`%exeSFK% hexfind "!VH_Path!" -binary /%hex_lead%%%~nI%hex_tail%/ ^| findstr.exe /N /C:"%string2count%"`) do set /A "cnt_HitsLocal+=1"
+		call :HexFindCount "!VH_Path!" "%hex_lead%%%~nI%hex_tail%" cnt_HitsLocal
+		set "cnt_HitsLocal=!ERRORLEVEL!"
 		call :log " -> Found !cnt_HitsLocal! hits for %%I speakers."
 		
 		::#  generate and store results in vars.
@@ -204,7 +207,7 @@ goto :ERR
 	)
 	set "cnt_HitsLocal="
 
-	::#  summarize the results.
+	::#  summarize the results. (calculate the value of the formula in !cnt_HitsTotal!)
 	set /A cnt_HitsTotalS=!cnt_HitsTotal!
 	set /A cnt_spkS=!cnt_spk!
 
@@ -215,71 +218,146 @@ goto :ERR
 	)
 
 
-::#  Remove the current configured # of speakers from the list of valid #s.
-set "chan_nmbrs=!chan_nmbrs:%cnt_spkS% =!"
+:stepSND
+	::#  Remove the current configured # of speakers from the list of valid #s.
+	set "chan_nmbrs=!chan_nmbrs:%cnt_spkS% =!"
+	set "cnt_spkN="
+	echo[
+	echo[ ############### Surround Sound ###################
+	echo[ #
+	echo[ #   VH's current number of used speakers:
+	echo[ #                 %cnt_spkS%
+	echo[ #   Enter one of the valid alternative values
+	echo[ #              %chan_nmbrs:~0,-1%
+	echo[ #   to modify or nothing to skip this step.
+	echo[ #
+	set /P cnt_spkN= #   New # of speakers:
+	echo[ #
+	echo[ ##################################################
+	echo[
 
-set "cnt_spkN="
-echo[
-echo[ ##################################################
-echo[ #
-echo[ #   VH is currently configured to use %cnt_spkS% speakers.
-echo[ #   Enter one of the valid alternative values
-echo[ #   (%chan_nmbrs:~0,-1%) to modify or nothing to quit.
-echo[ #
-set /P cnt_spkN= #   New # of speakers:
-echo[ #
-echo[ ##################################################
-echo[
+	if not defined cnt_spkN goto :stepGFX
+	set /A "cnt_spk=cnt_spkN"
+	if "%cnt_spk%" NEQ "!cnt_spkN!" (
+		set "ERL=23"
+		set "errMSG=You entered something unsupported ("%cnt_spkN%" vs. "%cnt_spk%")."
+		goto :ERR
+	)
+	if "%chan_nmbrs%" EQU "!chan_nmbrs:%cnt_spkN% =!" (
+		set "ERL=24"
+		set "errMSG=You entered an invalid value ("%cnt_spkN%")."
+		goto :ERR
+	)
+	echo[
+	echo[
+	set "sfk_cmd=%exeSFK% replace "!VH_Path!" -binary /%hex_lead%%cnt_spkS%%hex_tail%/%hex_lead%%cnt_spkN%%hex_tail%/"
+	!sfk_cmd!
+	echo[
+	echo[ ##################################################
+	echo[ #
+	echo[ #  Does everything look alright up there ^^^^ ?
+	echo[ #  Will only eactly one position/byte be modified?
+	echo[ #  If not press CTRL+C now.
+	echo[ #
+	echo[ ##################################################
+	echo[
+	pause
+	echo[
+	!sfk_cmd! -yes
+	set "ERL=%ERRORLEVEL%"
+	if %ERL% NEQ 1 (
+		set "ERL=3%ERL%"
+		set "errMSG=Error patching ".\%path_sub%" (see above for details)."
+		goto :ERR
+	)
+	set "ERL=0"
 
-if not defined cnt_spkN goto :EOFi
 
-set /A "cnt_spk=cnt_spkN"
 
-if "%cnt_spk%" NEQ "!cnt_spkN!" (
-	set "ERL=23"
-	set "errMSG=You entered something unsupported ("%cnt_spkN%" vs. "%cnt_spk%")."
-	goto :ERR
-)
+:stepGFX
+	::#   adding GFX config stuff to boot.config
+	set "VH_PathBC=!VH_Path:%file2mod%=!boot.config"
+	set GFXsets="gfx-enable-gfx-jobs=1" "gfx-enable-native-gfx-jobs=1"
+	echo[
+	set "usrChoice="
+	echo[
+	echo[ ############### GFX settings #####################
+	echo[ #
+	echo[ #   Do you want to add the following settings
+	for %%I IN (%GFXsets%) do echo[ #      -^>  "%%~I"
+	echo[ #   to VH's boot.config file?
+	echo[ #     "!VH_PathBC!"
+	echo[ #   Enter anything for YES or nothing to skip.
+	echo[ #
+	set /P usrChoice= #   [INPUT]:
+	echo[ #
+	echo[ ##################################################
+	echo[
+	if not defined usrChoice goto :stepPhysInp
 
-if "%chan_nmbrs%" EQU "!chan_nmbrs:%cnt_spkN% =!" (
-	set "ERL=24"
-	set "errMSG=You entered an invalid value ("%cnt_spkN%")."
-	goto :ERR
-)
+	::#		Check existence of the vars of each var/value pair.
+	for %%I IN (%GFXsets%) do (
+		for /F "tokens=1,2 delims==" %%J IN ("%%~I") do (
+			findstr /B /I "%%~J=" "!VH_PathBC!" >NUL && (
+				echo[ # Boot.config already contains "%%~J=%%~K".
+			) || (
+				echo[ + Adding "%%~J=%%~K" to VH's "boot.config" file.
+				echo[%%~J=%%~K>>"!VH_PathBC!"
+			)
+		)
+	)
+goto :stepPhysInp
 
-echo[
-echo[
-set "sfk_cmd=%exeSFK% replace "!VH_Path!" -binary /%hex_lead%%cnt_spkS%%hex_tail%/%hex_lead%%cnt_spkN%%hex_tail%/"
-!sfk_cmd!
 
-echo[
-echo[ ##################################################
-echo[ #
-echo[ #  Does everything look alright up there ^^^^ ?
-echo[ #  Will only eactly one position/byte be modified?
-echo[ #  If not press CTRL+C now.
-echo[ #
-echo[ ##################################################
-echo[
-pause
-echo[
 
-!sfk_cmd! -yes
-set "ERL=%ERRORLEVEL%"
-
-if %ERL% NEQ 1 (
-	set "ERL=3%ERL%"
-	set "errMSG=Error patching ".\%path_sub%" (see above for details)."
-	goto :ERR
-)
-
-set "ERL=0"
+:stepPhysInp
+	::# search for m_UsePhysicalKeys=1
+	call :HexFindCount "!VH_Path!" "%hex_PhyInp%1"
+	set "PhysInpUsed=%ERRORLEVEL%"
+	::# search for m_UsePhysicalKeys=0
+	call :HexFindCount "!VH_Path!" "%hex_PhyInp%0"
+	set "PhysInpUsed=%PhysInpUsed%;%ERRORLEVEL%"
+	
+	if "%PhysInpUsed%" NEQ "0;1" if "%PhysInpUsed%" NEQ "1;0" (
+		set /A "ERL=-2000000+1000*!PhysInpUsed:;=+!"
+		set "errMSG=Searching for VH's "physical input state" returned 'false' results: %PhysInpUsed%"
+		goto :ERR
+	)
+	REM set "PhysInpUsed=%PhysInpUsed:~0,1%"
+	
+	echo[
+	set "usrChoice="
+	echo[
+	echo[ ############### Keyboard Input ###################
+	echo[ #
+	echo[ #   Valheim is currently configured to use 
+	if %PhysInpUsed:~0,1% EQU 1 (
+		   echo[ #   'PHYSICAL' keyboard key-codes.
+	) else echo[ #   'NORMAL' keyboard input (plus layout).
+	echo[ #
+	echo[ #   Enter anything to switch or nothing to skip.
+	echo[ #
+	set /P usrChoice= #   [INPUT]:
+	echo[ #
+	echo[ ##################################################
+	echo[
+	if not defined usrChoice goto :EOFi
+	
+	set "sfk_cmd=%exeSFK% replace "!VH_Path!" -binary /%hex_PhyInp%%PhysInpUsed:~0,1%/%hex_PhyInp%%PhysInpUsed:~2,1%/"
+	!sfk_cmd! -yes
+	set "ERL=%ERRORLEVEL%"
+	if %ERL% NEQ 1 (
+		set "ERL=5%ERL%"
+		set "errMSG=Error patching ".\%path_sub%" (see above for details)."
+		goto :ERR
+	)
+	set "ERL=0"
+	
 goto :EOFi
 
 
 
-
-::# ------------ Subroutines not belonging to the 'real' script follow here. ------------------
+::# ------------ Function/Subroutines not belonging to the 'real' script follow here. ------------------
 
 :ERR
 echo[
@@ -308,8 +386,54 @@ endlocal & exit /b
 
 
 
+::# ---------- Function HexFindCount
+::#
+::#  HexFindCount must be used like this:
+::#		call :HexFindCount 1file 2hexString [3rtnVar]
+::#  Returns/Sets:
+::#		[rtnVar]		number of times 2hexString was found in 1file
+::#  Errorlevel:
+::#		GEQ 0	->	same as rtnVar
+::#		LSS 0	->	sfk hexfind -|errorlevel|
+::#
+:HexFindCount
+setlocal
+	set "mod_ERL=-1"
+	if "%~2" EQU "" goto :HexFindCount_end
+	
+	set "string2count= hit at offset 0x"
+	set "mod_rtn=-1"
+	set "mod_ERL="
+	::# do (sfk hexfind .... & echo %string2count% + =!ERRORLEVEL!) | findstr ...
+	::#		-> split by = and last %%J is sfk's ERL.
+	for /F "usebackq tokens=1,2 delims==" %%I in (`^
+		(^
+			%exeSFK% hexfind "%~1" -binary "/%~2/" 2^>NUL ^
+			^& echo[ ^& echo[%string2count%ERR^=^^^!ERRORLEVEL^^^!^
+		^) ^| findstr.exe /N /C:"%string2count%" ^
+	`) do (
+		set /A "mod_rtn+=1"
+		set /A "mod_ERL=%%~J" 2>NUL
+	)
+	if not defined mod_ERL set "mod_ERL=-1000
+	if %mod_ERL% GTR 1 (
+		set /A "mod_ERL*=-1"
+	) else if %mod_ERL% GEQ 0 (
+		set "mod_ERL=%mod_rtn%"
+	)
+	REM if %mod_ERL% LSS 0 echo[--ERROR HexFindCount=%mod_ERL%
+:HexFindCount_end
+endlocal &(
+	if %mod_ERL% GEQ 0 if "%~3" NEQ "" set "%~3=%mod_rtn%"
+	REM  else if %mod_ERL% LSS 0 set "errMSG=%mod_errMSG%"
+	exit /B %mod_ERL%
+)
+::# ---------- End HexFindCount
 
-::# ---------- Begin ReadReg
+
+
+
+::# ---------- Function ReadReg
 ::#
 ::#  ReadReg must be used like this:
 ::#    call :ReadReg 1rtnVar 2regPath 3regEntry
@@ -322,11 +446,9 @@ endlocal & exit /b
 :ReadReg
 setlocal
 	set "mod_rtn="
-	for /F "usebackq tokens=2* skip=2" %%I IN (`reg.exe query "%~2" /v "%~3"`) do set "mod_rtn=%%~J"
+	for /F "usebackq tokens=2* skip=2" %%I IN (`reg.exe query "%~2" /v "%~3" 2^>NUL`) do set "mod_rtn=%%~J"
 	set "mod_ERL=%ERRORLEVEL%"
-::# Clear all local vars ...
 endlocal &(
-	REM ... except the required ones.
 	REM if %mod_ERL% GTR 0 
 		if /I "%~1" NEQ "NUL" if "%mod_rtn%" NEQ "" set "%~1=%mod_rtn%"
 	REM  else if %mod_ERL% LSS 0 set "errMSG=%mod_errMSG%"
@@ -337,7 +459,7 @@ endlocal &(
 
 
 
-::# ---------- Begin ProgFind
+::# ---------- Function ProgFind
 ::#
 ::#  ProgFind must be used like this:
 ::#    call :ProgFind 1"<path(s)>" 2rtnVar 3programs/files [4to [5look [6for ...]]]
@@ -465,7 +587,7 @@ endlocal &(
 
 
 
-::# ---------- Begin Check-File-System-Object
+::# ---------- Function Check-File-System-Object
 ::# Usage:
 ::# call :chkFiSysObj <obj>, 1full, 2drive, 3path, 4name, 5ext, 6size, 7attr, 8time
 ::# Unused variables between used ones must/can be set to "nul"
@@ -477,7 +599,7 @@ endlocal &(
 ::#   -2	placeholders in %~1 and no fitting files(!) found. no vars defined.
 ::#   -3	forbidden chars in %~1.
 ::# if not defined (6, 7 or 8) -> object does not exist.
-
+::#
 :chkFiSysObj
 SETLOCAL EnableDelayedExpansion EnableExtensions
 	if "%~n0" EQU "chkFiSysObj" call :varset
@@ -586,9 +708,7 @@ if "!RemOrDebugRun!" NEQ "!RemOrDebugRun:@=!" (
 
 %RemOrVerbRun% echo[ ---- %mod_Name% end.
 
-::# Clear all local vars ...
 endlocal &(
-	REM ... except the required ones.
 	if %mod_ERL% GEQ -2 (
 		set "%mod_n1%=%mod_r1_Full%"
 		set "%mod_n2%=%mod_r2_Drive%"

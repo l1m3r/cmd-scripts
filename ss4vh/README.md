@@ -1,12 +1,16 @@
-# SSound4Val.cmd - Surround sound for Valheim
+# SSound4Val.cmd - Surround sound for Valheim & more
 
 Choose and change Valheim's surround sound configuration to your hearts desire.
+
+Automatically add some GFX configuration options to VH's `boot.config`.
+
+Switch VH's (keyboard) input method between 'normal' - respecting the users keyboard layout & language - and 'physical' - using key-codes instead.
 
 ---
 
 ## Features
 
-- Reads Valheim's current speaker configuration and lets you change it.
+- Reads Valheim's current speaker/input configuration and lets you change it.
 - If it can't find the file to patch you can drag'n'drop it manually on the script file(!) instead.
 
 ---
@@ -34,13 +38,15 @@ Alternatively one can
 
 - find a way to [get IronGate to just enabled surround sound](https://valheimbugs.featureupvote.com/suggestions/271742/enable-surround-sound-51-71) support in VH which existed since its first release (at least).
 
+The input method is handled practically the same.
+
 ---
 
 ## Limitations
 
 - only works on Windows...
-- every update to VH seems to replace the relevant file. -> need to apply the patch after every update (maybe a *proper* mod using BepInEx would be better).
-- My hex search string has worked flawlessly at least with all VH versions between January and May 2023 but there's no guaranty it will keep doing so in the future.
+- every update to VH seems to replace the relevant file. -> need to apply the patch after every update (maybe a *proper* mod using BepInEx would be better?).
+- My hex search strings have worked flawlessly at least with all VH versions between January and November 2023 but there's no guaranty they will keep doing so in the future.
 
 ---
 
@@ -61,6 +67,8 @@ Further reading / documentation / information:
 
 * Reddit - [Finally it is here - after almost two years of waiting real surround sound works](https://www.reddit.com/r/valheim/comments/10ni8cm/finally_it_is_here_after_almost_two_years_of/)
 
+* Reddit - [Key "OemBackslash" unusable in versions (0.217.28,) 0.217.29 & 0.217.30](https://www.reddit.com/r/valheim/comments/17w3des/)
+
 ---
 
 ## Contributing
@@ -69,19 +77,19 @@ Further reading / documentation / information:
 
 - **Option 1**
   
-  - ğŸ´ Fork this repo!
+  - ?´ Fork this repo!
 
 - **Option 2**
   
-  - ğŸ‘¯ Clone this repo to your local machine.
+  - ?‘¯ Clone this repo to your local machine.
 
 ### Step 2
 
-- **HACK AWAY!** ğŸ”¨ğŸ”¨ğŸ”¨
+- **HACK AWAY!** ?”¨?”¨?”¨
 
 ### Step 3
 
-- ğŸ”ƒ Create a new [pull request](https://github.com/l1m3r/cmd-scripts/compare/).
+- ?”ƒ Create a new [pull request](https://github.com/l1m3r/cmd-scripts/compare/).
 
 ---
 
