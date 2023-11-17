@@ -2,16 +2,16 @@
 
 Choose and change Valheim's surround sound configuration to your hearts desire.
 
-Automatically add some GFX configuration options to VH's `boot.config`.
+Add some GFX configuration options to VH's `boot.config`.
 
-Switch VH's (keyboard) input method between 'normal' - respecting the users keyboard layout & language - and 'physical' - using key-codes instead.
+Switch VH's (keyboard) input method between 'normal' - respecting the users keyboard layout & language - and 'physical' - using Unity/hardware [key-codes](https://docs.unity3d.com/ScriptReference/KeyCode.html) instead.
 
 ---
 
 ## Features
 
 - Reads Valheim's current speaker/input configuration and lets you change it.
-- If it can't find the file to patch you can drag'n'drop it manually on the script file(!) instead.
+- If it can't find the file to patch you can drag'n'drop it manually on the script file(!) instead (not on the running cmd shell window).
 
 ---
 
@@ -38,7 +38,7 @@ Alternatively one can
 
 - find a way to [get IronGate to just enabled surround sound](https://valheimbugs.featureupvote.com/suggestions/271742/enable-surround-sound-51-71) support in VH which existed since its first release (at least).
 
-The input method is handled practically the same.
+Changing the input method is handled practically the same.
 
 ---
 
@@ -77,19 +77,19 @@ Further reading / documentation / information:
 
 - **Option 1**
   
-  - ?ç¥ Fork this repo!
+  - Fork this repo!
 
 - **Option 2**
   
-  - ?ëØ Clone this repo to your local machine.
+  - Clone this repo to your local machine.
 
 ### Step 2
 
-- **HACK AWAY!** ?î®?î®?î®
+- **HACK AWAY!**
 
 ### Step 3
 
-- ?îÉ Create a new [pull request](https://github.com/l1m3r/cmd-scripts/compare/).
+- Create a new [pull request](https://github.com/l1m3r/cmd-scripts/compare/).
 
 ---
 
@@ -104,6 +104,8 @@ No Q&As so far.
 As far as I can tell nothing in this project and nothing I did to produce it violates any law or license (copyright, IP, EULA, etc.).
 
 And it seems to me like it would fall under "fair use" anyway because the *purposes is interoperability*(!) between Valheim and any setup with more than two speakers. Or to [correct](https://www.lexology.com/library/detail.aspx?g=f5b1193c-f423-4f96-bca5-03f5145ecf15) [errors](https://uk.practicallaw.thomsonreuters.com/w-030-8064?contextData=(sc.Default)&transitionType=Default&firstPage=true).
+
+**Provided as-is. Use at your own risk! No warranty. I disclaim any and all liability.**
 
 ---
 
