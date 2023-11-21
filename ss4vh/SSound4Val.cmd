@@ -7,7 +7,7 @@ set "CRLFs=?"
 )
 
 ::#  just title and version
-set "version=0.2.1_20231116"
+set "version=0.2.2_20231121"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -36,10 +36,10 @@ set "path_sub=valheim_Data\%file2mod%"
 set "VH_exe=valheim.exe"
 
 set "chan_nmbrs=2 4 5 6 8 "
-set "hex_lead=0000803F0"
-set "hex_tail=0000000000000000040000"
-REM                                                  1 -> 0
+set "hex_Speaker=0000803F0-SpkN-0000000000000000040000"
 set "hex_PhyInp=803f000000000200000009000000080000000"
+REM                                         trailing ^=1/0
+set GFXsets="gfx-enable-gfx-jobs=1" "gfx-enable-native-gfx-jobs=1" "scripting-runtime-version=latest"
 
 
 cd /D "%~dp0"
@@ -128,7 +128,7 @@ if not defined inp goto :searchPaths
 	call :chkFiSysObj "!inp!" VH_Path nul nul inp_name inp_ext inp_size inp_attr nul
 	set "ERL=%ERRORLEVEL%"
 	
-	if %ERL% EQU 1 if %inp_size% GTR 1 if not defined inp_ext if /I "!inp_name!" EQU "%file2mod%" if "%inp_attr:~1,1%" EQU "-" goto :readHex
+	if %ERL% EQU 1 if %inp_size% GTR 1 if not defined inp_ext if /I "!inp_name!" EQU "%file2mod%" if "%inp_attr:~1,1%" EQU "-" goto :searchPaths_end
 	::# ELSE
 	set "errMSG=Your argument!CRLF_! "!inp!"!CRLF_!didn't meet all conditions:!CRLF_! ? cnt: %ERL% EQU 1!CRLF_! ? size=%inp_size%!CRLF_! ? ext="%inp_ext%" EQU ""!CRLF_! ? name: "!inp_name!" EQU "%file2mod%"!CRLF_! ? read-only: %inp_attr:~1,1% EQU -"
 	set "ERL=51"
@@ -177,11 +177,13 @@ goto :ERR
 			set "VH_Path=!inp_full!"
 		)
 	)
-	if defined VH_Path goto :readHex
+	if defined VH_Path goto :searchPaths_end
 	REM else
 		set "errMSG=Couldn't find ".\%path_sub%" in any of the 'normal' locations:!errMSG!!CRLF_! -> Try drag'n'dropping the file "%file2mod%"!CRLF_!    on "%~nx0" instead.!CRLF_!    (but NOT on the open cmd shell window^!^)"
 		set "ERL=20"
 	goto :ERR
+:searchPaths_end
+
 
 
 ::# Enumerate current number of configured speakers and make sure patching is at least "kinda safe".
@@ -193,7 +195,7 @@ goto :ERR
 	for %%I IN (%chan_nmbrs%) do (
 		set "cnt_HitsLocal=0"
 		::#  search file "path_sub" for HEX-string and count hits.
-		call :HexFindCount "!VH_Path!" "%hex_lead%%%~nI%hex_tail%" cnt_HitsLocal
+		call :HexFindCount "!VH_Path!" "!hex_Speaker:-SpkN-=%%~nI!" cnt_HitsLocal
 		set "cnt_HitsLocal=!ERRORLEVEL!"
 		call :log " -> Found !cnt_HitsLocal! hits for %%I speakers."
 		
@@ -223,9 +225,11 @@ goto :ERR
 	set "chan_nmbrs=!chan_nmbrs:%cnt_spkS% =!"
 	set "cnt_spkN="
 	echo[
+	echo[
+	echo[
 	echo[ ############### Surround Sound ###################
 	echo[ #
-	echo[ #   VH's current number of used speakers:
+	echo[ #   Valheim's current number of used speakers:
 	echo[ #                 %cnt_spkS%
 	echo[ #   Enter one of the valid alternative values
 	echo[ #              %chan_nmbrs:~0,-1%
@@ -236,8 +240,8 @@ goto :ERR
 	echo[ ##################################################
 	echo[
 
-	if not defined cnt_spkN goto :stepGFX
-	set /A "cnt_spk=cnt_spkN"
+	if not defined cnt_spkN goto :stepSND_end
+	set /A "cnt_spk=cnt_spkN" 2>NUL
 	if "%cnt_spk%" NEQ "!cnt_spkN!" (
 		set "ERL=23"
 		set "errMSG=You entered something unsupported ("%cnt_spkN%" vs. "%cnt_spk%")."
@@ -245,25 +249,10 @@ goto :ERR
 	)
 	if "%chan_nmbrs%" EQU "!chan_nmbrs:%cnt_spkN% =!" (
 		set "ERL=24"
-		set "errMSG=You entered an invalid value ("%cnt_spkN%")."
+		set "errMSG=You entered an invalid value ("%cnt_spkN%" vs. "%chan_nmbrs:~0,-1%")."
 		goto :ERR
 	)
-	echo[
-	echo[
-	set "sfk_cmd=%exeSFK% replace "!VH_Path!" -binary /%hex_lead%%cnt_spkS%%hex_tail%/%hex_lead%%cnt_spkN%%hex_tail%/"
-	!sfk_cmd!
-	echo[
-	echo[ ##################################################
-	echo[ #
-	echo[ #  Does everything look alright up there ^^^^ ?
-	echo[ #  Will only eactly one position/byte be modified?
-	echo[ #  If not press CTRL+C now.
-	echo[ #
-	echo[ ##################################################
-	echo[
-	pause
-	echo[
-	!sfk_cmd! -yes
+	%exeSFK% replace "!VH_Path!" -binary /!hex_Speaker:-SpkN-=%cnt_spkS%!/!hex_Speaker:-SpkN-=%cnt_spkN%!/ -yes -dump
 	set "ERL=%ERRORLEVEL%"
 	if %ERL% NEQ 1 (
 		set "ERL=3%ERL%"
@@ -271,42 +260,8 @@ goto :ERR
 		goto :ERR
 	)
 	set "ERL=0"
+:stepSND_end
 
-
-
-:stepGFX
-	::#   adding GFX config stuff to boot.config
-	set "VH_PathBC=!VH_Path:%file2mod%=!boot.config"
-	set GFXsets="gfx-enable-gfx-jobs=1" "gfx-enable-native-gfx-jobs=1"
-	echo[
-	set "usrChoice="
-	echo[
-	echo[ ############### GFX settings #####################
-	echo[ #
-	echo[ #   Do you want to add the following settings
-	for %%I IN (%GFXsets%) do echo[ #      -^>  "%%~I"
-	echo[ #   to VH's boot.config file?
-	echo[ #     "!VH_PathBC!"
-	echo[ #   Enter anything for YES or nothing to skip.
-	echo[ #
-	set /P usrChoice= #   [INPUT]:
-	echo[ #
-	echo[ ##################################################
-	echo[
-	if not defined usrChoice goto :stepPhysInp
-
-	::#		Check existence of the vars of each var/value pair.
-	for %%I IN (%GFXsets%) do (
-		for /F "tokens=1,2 delims==" %%J IN ("%%~I") do (
-			findstr /B /I "%%~J=" "!VH_PathBC!" >NUL && (
-				echo[ # Boot.config already contains "%%~J=%%~K".
-			) || (
-				echo[ + Adding "%%~J=%%~K" to VH's "boot.config" file.
-				echo[%%~J=%%~K>>"!VH_PathBC!"
-			)
-		)
-	)
-goto :stepPhysInp
 
 
 
@@ -323,28 +278,29 @@ goto :stepPhysInp
 		set "errMSG=Searching for VH's "physical input state" returned 'false' results: %PhysInpUsed%"
 		goto :ERR
 	)
-	REM set "PhysInpUsed=%PhysInpUsed:~0,1%"
 	
-	echo[
+	set "inpTypTxt-0='NORMAL' keyboard input (+language/layout)"
+	set "inpTypTxt-1='PHYSICAL' keyboard key-codes"
+	
 	set "usrChoice="
+	echo[
+	echo[
 	echo[
 	echo[ ############### Keyboard Input ###################
 	echo[ #
 	echo[ #   Valheim is currently configured to use 
-	if %PhysInpUsed:~0,1% EQU 1 (
-		   echo[ #   'PHYSICAL' keyboard key-codes.
-	) else echo[ #   'NORMAL' keyboard input (plus layout).
+	echo[ #     !inpTypTxt-%PhysInpUsed:~0,1%!
+	echo[ #   instead of
+	echo[ #     !inpTypTxt-%PhysInpUsed:~2,1%!.
 	echo[ #
 	echo[ #   Enter anything to switch or nothing to skip.
-	echo[ #
 	set /P usrChoice= #   [INPUT]:
 	echo[ #
 	echo[ ##################################################
 	echo[
-	if not defined usrChoice goto :EOFi
+	if not defined usrChoice goto :stepPhysInp_end
 	
-	set "sfk_cmd=%exeSFK% replace "!VH_Path!" -binary /%hex_PhyInp%%PhysInpUsed:~0,1%/%hex_PhyInp%%PhysInpUsed:~2,1%/"
-	!sfk_cmd! -yes
+	%exeSFK% replace "!VH_Path!" -binary /%hex_PhyInp%%PhysInpUsed:~0,1%/%hex_PhyInp%%PhysInpUsed:~2,1%/ -yes -dump
 	set "ERL=%ERRORLEVEL%"
 	if %ERL% NEQ 1 (
 		set "ERL=5%ERL%"
@@ -352,8 +308,46 @@ goto :stepPhysInp
 		goto :ERR
 	)
 	set "ERL=0"
-	
+:stepPhysInp_end
+
+
+
+
+:stepGFX
+	::#   adding GFX config stuff to boot.config
+	set "VH_PathBC=!VH_Path:%file2mod%=!boot.config"
+	set "usrChoice="
+	echo[
+	echo[
+	echo[
+	echo[ ############### GFX settings #####################
+	echo[ #
+	echo[ #   Do you want to add the following settings
+	for %%I IN (%GFXsets%) do echo[ #      "%%~I"
+	echo[ #   to VH's boot.config file?
+	echo[ #     "!VH_PathBC!"
+	echo[ #
+	echo[ #   Enter anything for YES or nothing to skip.
+	set /P usrChoice= #   [INPUT]:
+	echo[ #
+	echo[ ##################################################
+	echo[
+	if not defined usrChoice goto :stepGFX_end
+
+	::#		Check existence of the vars of each var/value pair.
+	for %%I IN (%GFXsets%) do (
+		for /F "tokens=1,2 delims==" %%J IN ("%%~I") do (
+			findstr /B /I "%%~J=" "!VH_PathBC!" >NUL && (
+				echo[ # Boot.config already contains "%%~J".
+			) || (
+				echo[ + Adding "%%~J=%%~K" to VH's "boot.config" file.
+				echo[%%~J=%%~K>>"!VH_PathBC!"
+			)
+		)
+	)
+:stepGFX_end
 goto :EOFi
+
 
 
 
