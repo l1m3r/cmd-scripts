@@ -36,7 +36,7 @@ This script uses [Swiss File Knife](http://www.stahlworks.com/swiss-file-knife.h
 
 - use [UABEA](https://github.com/nesrak1/UABEA) to edit the file directly (but for some reason leave a few more bytes modified).
 
-- use any hex-editor to modify it manually (see the [*source*](/search?q=repo%3Al1m3r%2Fcmd-scripts%20hex_Speaker&type=code) for a *usable* hex search string).
+- use any hex-editor to modify it manually (see the [*source*](https://github.com/search?q=repo%3Al1m3r%2Fcmd-scripts+path%3Ass4vh%2FSSound4Val.cmd+hex_Speaker&type=code) for a *usable* hex search string).
 
 - find a way to [get IronGate to just enabled surround sound](https://valheimbugs.featureupvote.com/suggestions/271742/enable-surround-sound-51-71) support in VH which technically existed since its first release (at least).
 
