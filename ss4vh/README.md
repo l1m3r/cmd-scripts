@@ -4,7 +4,7 @@ Choose and change Valheim's surround sound configuration to your hearts desire.
 
 Add some GFX configuration options to VH's `boot.config`.
 
-Switch VH's (keyboard) input method between 'normal' - respecting the users keyboard layout & language - and 'physical' - using Unity/hardware [key-codes](https://docs.unity3d.com/ScriptReference/KeyCode.html) instead.
+Switch VH's (keyboard) input method between '***normal***' - respecting the users keyboard layout & language - and '***physical***' - using Unity/hardware [key-codes](https://docs.unity3d.com/ScriptReference/KeyCode.html) instead.
 
 ---
 
@@ -30,13 +30,15 @@ Switch VH's (keyboard) input method between 'normal' - respecting the users keyb
 
 This script uses [Swiss File Knife](http://www.stahlworks.com/swiss-file-knife.html) to modify half-a-byte in the file `...\Valheim\valheim_Data\globalgamemanagers` (no extension). It replaces Valheim's default value of "*2*" for Unity's [AudioSpeakerMode](https://docs.unity3d.com/ScriptReference/AudioSpeakerMode.html) with *4*, *5*, *6* or *8* for the respective number of speakers (4, 5, 5.1, 7.1). That's it.
 
-Alternatively one can
+**Alternatively one can**
+
+- install the mod [SimpleAudioOptions ](https://thunderstore.io/c/valheim/p/Azumatt/SimpleAudioOptions/) instead.
 
 - use [UABEA](https://github.com/nesrak1/UABEA) to edit the file directly (but for some reason leave a few more bytes modified).
 
-- use any hex-editor to modify it manually (see the *source* for a *usable* hex search string).
+- use any hex-editor to modify it manually (see the [*source*](/search?q=repo%3Al1m3r%2Fcmd-scripts%20path%3ASSound4Val%20hex_Speaker&type=code) for a *usable* hex search string).
 
-- find a way to [get IronGate to just enabled surround sound](https://valheimbugs.featureupvote.com/suggestions/271742/enable-surround-sound-51-71) support in VH which existed since its first release (at least).
+- find a way to [get IronGate to just enabled surround sound](https://valheimbugs.featureupvote.com/suggestions/271742/enable-surround-sound-51-71) support in VH which technically existed since its first release (at least).
 
 Changing the input method is handled practically the same.
 

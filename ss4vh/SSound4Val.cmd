@@ -1,15 +1,15 @@
 @echo off
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
-set "CRLFs=?"
-(set CRLF_=^
-%=this line is empty=%
-)
-
 ::#  just title and version
 set "version=0.2.2_20231121"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
+
+set "CRLFs=?"
+(set CRLF_=^
+%=this line is empty=%
+)
 
 set "ccl=!cmdcmdline!"
 set "ccl=!ccl:"=!"
@@ -25,8 +25,13 @@ set "RemOrDebugRun=REM"
 set "RemOrVerbRun=REM"
 set "RunOrQuietRem=@"
 
-set "sfkURL=http://stahlworks.com/dev/sfk/sfk.exe"
-for %%I IN (%sfkURL%) do set "exeSFK=%%~nxI"
+set "url_Github=https://github.com/l1m3r/cmd-scripts/tree/master/ss4vh"
+set "URL_Update=%url_Github:github.com=raw.githubusercontent.com%"
+set "URL_Update=%URL_Update:tree/=%"
+set "URL_Update=%URL_Update%/%~nx0"
+
+set "URL_SFK=http://stahlworks.com/dev/sfk/sfk.exe"
+for %%I IN (%URL_SFK%) do set "exeSFK=%%~nxI"
 set "pwrSH=powershell.exe"
 
 set "VH_regPath=HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App 892970"
@@ -39,7 +44,7 @@ set "chan_nmbrs=2 4 5 6 8 "
 set "hex_Speaker=0000803F0-SpkN-0000000000000000040000"
 set "hex_PhyInp=803f000000000200000009000000080000000"
 REM                                         trailing ^=1/0
-set GFXsets="gfx-enable-gfx-jobs=1" "gfx-enable-native-gfx-jobs=1" "scripting-runtime-version=latest"
+set GFXsets="gfx-enable-gfx-jobs=1" "gfx-enable-native-gfx-jobs=1" "scripting-runtime-version=latest" "vr-enabled=0"
 
 
 cd /D "%~dp0"
@@ -65,7 +70,7 @@ if not defined prog_missing goto :READY
 	echo[ #
 	echo[ #   This script will now download the 3rd party
 	echo[ #   program "%exeSFK%" from
-	echo[ #    %sfkURL%
+	echo[ #    %URL_SFK%
 	echo[ #   and use/execute(^^!) it to read/patch/modify
 	echo[ #   VH's file "%file2mod%"
 	echo[ #
@@ -86,7 +91,7 @@ if not defined prog_missing goto :READY
 	::#  exeSFK is missing -> downloading it to the current directory
 	set "exePS+A=%pwrSH% -nologo -noprofile -command"
 	set "exePS_PPSC=$ProgressPreference = 'SilentlyContinue'"
-	%exePS+A% "%exePS_PPSC%; Invoke-WebRequest '%sfkURL%' -OutFile '%exeSFK%'"
+	%exePS+A% "%exePS_PPSC%; Invoke-WebRequest '%URL_SFK%' -OutFile '%exeSFK%'"
 	set "ERL=%ERRORLEVEL%"
 	
 	if %ERL% NEQ 0 (
@@ -97,6 +102,9 @@ if not defined prog_missing goto :READY
 :READY
 
 call :log " -> Found all required programs."
+
+
+::#   ----------- Check for new version of this script ----------
 
 
 ::#   ----------- Check for other running instances of this scrip and/or Valheim ----------
@@ -316,6 +324,8 @@ goto :ERR
 :stepGFX
 	::#   adding GFX config stuff to boot.config
 	set "VH_PathBC=!VH_Path:%file2mod%=!boot.config"
+	set "gfxRnd=01101010011101101100111001"
+	set "gfxCnt=0"
 	set "usrChoice="
 	echo[
 	echo[
@@ -323,26 +333,50 @@ goto :ERR
 	echo[ ############### GFX settings #####################
 	echo[ #
 	echo[ #   Do you want to add the following settings
-	for %%I IN (%GFXsets%) do echo[ #      "%%~I"
+	for %%I IN (%GFXsets%) do (
+		set "gfxLN-!gfxCnt!=%%~I"
+		set /a "gfxCnt+=1"
+		echo[ #    !gfxCnt!: "%%~I"
+	)
 	echo[ #   to VH's boot.config file?
 	echo[ #     "!VH_PathBC!"
 	echo[ #
-	echo[ #   Enter anything for YES or nothing to skip.
+	echo[ #   Enter nothing to skip or %gfxCnt% times 0 or 1
+	echo[ #   to choose which settings to add ot not.
+	echo[ #    (exactly %gfxCnt% times 0/1 - eg. "!gfxRnd:~1,%gfxCnt%!")
+	echo[ #
 	set /P usrChoice= #   [INPUT]:
 	echo[ #
 	echo[ ##################################################
 	echo[
 	if not defined usrChoice goto :stepGFX_end
+	
+	::# Check usrChoice length
+	set "ERL=-2356"
+	set "errMSG=You didn't enter enough digits (!gfxCnt!: "!usrChoice!")."
+	set /a "gfxCnt-=1"
+	if "!usrChoice:~%gfxCnt%!" EQU "" goto :ERR
+	set /a "gfxCnt+=1"
+	set "errMSG=You entered too many symbols (!gfxCnt!: "!usrChoice!")."
+	set /a "ERL-=1"
+	if "!usrChoice:~%gfxCnt%!" NEQ "" goto :ERR
+	
+	::# check if usrChoice only contains 1/0s
+	set "gfxTmp="
+	for /f "delims=01" %%I in ("!usrChoice!") do set "gfxTmp=%%~I"
+	set /a "ERL-=1"
+	set "errMSG=Only zeros and ones are accepted (0/1: "!usrChoice!" -^> "!gfxTmp!")."
+	if defined gfxTmp goto :ERR
 
-	::#		Check existence of the vars of each var/value pair.
-	for %%I IN (%GFXsets%) do (
-		for /F "tokens=1,2 delims==" %%J IN ("%%~I") do (
-			findstr /B /I "%%~J=" "!VH_PathBC!" >NUL && (
-				echo[ # Boot.config already contains "%%~J".
-			) || (
-				echo[ + Adding "%%~J=%%~K" to VH's "boot.config" file.
-				echo[%%~J=%%~K>>"!VH_PathBC!"
-			)
+
+	set /a "gfxCnt-=1"
+	for /L %%I IN (0,1,%gfxCnt%) do if "!usrChoice:~%%I,1!" EQU "1" for /F "tokens=1,2 delims==" %%J IN ("!gfxLN-%%I!") do (
+		REM echo DA %%I - !gfxLN-%%I!
+		findstr /B /I "%%~J=" "!VH_PathBC!" >NUL && (
+			echo[ # Boot.config already contains "%%~J".
+		) || (
+			echo[ + Adding "%%~J=%%~K" to VH's "boot.config" file.
+			echo[%%~J=%%~K>>"!VH_PathBC!"
 		)
 	)
 :stepGFX_end
