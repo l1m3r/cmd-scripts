@@ -2,7 +2,7 @@
 
 Choose and change Valheim's surround sound configuration to your hearts desire.
 
-Add some GFX configuration options to VH's `boot.config`.
+Optionally add some GFX configuration options to VH's `boot.config`.
 
 Switch VH's (keyboard) input method between '***normal***' - respecting the users keyboard layout & language - and '***physical***' - using Unity/hardware [key-codes](https://docs.unity3d.com/ScriptReference/KeyCode.html) instead.
 
