@@ -2,7 +2,7 @@
 setlocal ENABLEEXTENSIONS ENABLEDELAYEDEXPANSION
 
 ::#  just title and version
-set "version=0.2.2_20231121"
+set "version=0.2.3_20261105"
 set "title=%~nx0 - Ver. %version%"
 (title !title!)
 
@@ -40,14 +40,22 @@ set "file2mod=globalgamemanagers"
 set "path_sub=valheim_Data\%file2mod%"
 set "VH_exe=valheim.exe"
 
-set "chan_nmbrs=2 4 5 6 8 "
-set "hex_Speaker=0000803F0-SpkN-0000000000000000040000"
+REM set "spkr_cfgs=2 4 5 6 8 " <- old numbering scheme?! Not sure actually.
+set "dec2hex=0123456789ABCDEF"
+set "spkr_cfgs=1 2 3 4 5 6 7 d "
+set "spkr_cfg_1=Mono"
+set "spkr_cfg_2=Stereo"
+set "spkr_cfg_3=Quadraphonic"
+set "spkr_cfg_4=Surround 5.0"
+set "spkr_cfg_5=Surround 5.1"
+set "spkr_cfg_6=Surround 7.1"
+set "spkr_cfg_7=Prologic"
+set "spkr_cfg_D=Surround 7.1.4"
+set "hex_Speaker=0000803F0-SpkReplace-0000000000000000040000"
 set "hex_PhyInp=803f000000000200000009000000080000000"
 REM                                         trailing ^=1/0
 set GFXsets="gfx-enable-gfx-jobs=1" "gfx-enable-native-gfx-jobs=1" "scripting-runtime-version=latest" "vr-enabled=0"
 
-
-cd /D "%~dp0"
 
 call :log "Searching for required programs."
 ::# ---- Variables required for prog_find
@@ -91,7 +99,7 @@ if not defined prog_missing goto :READY
 	::#  exeSFK is missing -> downloading it to the current directory
 	set "exePS+A=%pwrSH% -nologo -noprofile -command"
 	set "exePS_PPSC=$ProgressPreference = 'SilentlyContinue'"
-	%exePS+A% "%exePS_PPSC%; Invoke-WebRequest '%URL_SFK%' -OutFile '%exeSFK%'"
+	%exePS+A% "%exePS_PPSC%; Invoke-WebRequest '%URL_SFK%' -OutFile '%~dp0.\%exeSFK%'"
 	set "ERL=%ERRORLEVEL%"
 	
 	if %ERL% NEQ 0 (
@@ -136,7 +144,10 @@ if not defined inp goto :searchPaths
 	call :chkFiSysObj "!inp!" VH_Path nul nul inp_name inp_ext inp_size inp_attr nul
 	set "ERL=%ERRORLEVEL%"
 	
-	if %ERL% EQU 1 if %inp_size% GTR 1 if not defined inp_ext if /I "!inp_name!" EQU "%file2mod%" if "%inp_attr:~1,1%" EQU "-" goto :searchPaths_end
+	if %ERL% EQU 1 if !inp_size! GTR 1 if not defined inp_ext if /I "!inp_name!" EQU "%file2mod%" if "!inp_attr:~1,1!" EQU "-" (
+		call :log "processed argument #1="!VH_Path!""
+		goto :searchPaths_end
+	)
 	::# ELSE
 	set "errMSG=Your argument!CRLF_! "!inp!"!CRLF_!didn't meet all conditions:!CRLF_! ? cnt: %ERL% EQU 1!CRLF_! ? size=%inp_size%!CRLF_! ? ext="%inp_ext%" EQU ""!CRLF_! ? name: "!inp_name!" EQU "%file2mod%"!CRLF_! ? read-only: %inp_attr:~1,1% EQU -"
 	set "ERL=51"
@@ -194,73 +205,85 @@ goto :ERR
 
 
 
-::# Enumerate current number of configured speakers and make sure patching is at least "kinda safe".
+::# Enumerate number of current speaker configuration and make sure patching is at least "kinda safe".
 :readHex
 	call :log "Searching for valid HEX-strings."
 	set "cnt_HitsTotal="
-	set "cnt_spk="
+	set "spkr_cfgTmp="
 
-	for %%I IN (%chan_nmbrs%) do (
+	for %%I IN (%spkr_cfgs%) do (
 		set "cnt_HitsLocal=0"
 		::#  search file "path_sub" for HEX-string and count hits.
-		call :HexFindCount "!VH_Path!" "!hex_Speaker:-SpkN-=%%~nI!" cnt_HitsLocal
+		call :HexFindCount "!VH_Path!" "!hex_Speaker:-SpkReplace-=%%~nI!" cnt_HitsLocal
 		set "cnt_HitsLocal=!ERRORLEVEL!"
-		call :log " -> Found !cnt_HitsLocal! hits for %%I speakers."
+		call :log " -> !cnt_HitsLocal! hits for speaker config '%%I' = !spkr_cfg_%%I!."
 		
 		::#  generate and store results in vars.
 		if !cnt_HitsLocal! GTR 0 (
 			set "cnt_HitsTotal=!cnt_HitsTotal!+!cnt_HitsLocal!"
 			REM set /A "cnt_HitsLocal*=%%~nI"
-			set "cnt_spk=!cnt_spk!+%%~nI*!cnt_HitsLocal!"
+			REM "0x" is required for hex value "d"
+			set "spkr_cfgTmp=!spkr_cfgTmp!+0x%%~nI*!cnt_HitsLocal!"
 		)
-		REM echo[ spkL="%%~I" --- cnt_HitsLocal=!cnt_HitsLocal! --- cnt_HitsTotal=!cnt_HitsTotal! --- cnt_spk=!cnt_spk!
+		REM echo[ spkL="%%~I" --- cnt_HitsLocal=!cnt_HitsLocal! --- cnt_HitsTotal=!cnt_HitsTotal! --- spkr_cfgTmp=!spkr_cfgTmp!
 	)
 	set "cnt_HitsLocal="
 
-	::#  summarize the results. (calculate the value of the formula in !cnt_HitsTotal!)
+	::#  enumerate the formula in cnt_HitsTotal.
 	set /A cnt_HitsTotalS=!cnt_HitsTotal!
-	set /A cnt_spkS=!cnt_spk!
-
 	if !cnt_HitsTotalS! NEQ 1 (
 		set ERL=22
-		set "errMSG=Didn't find exactly one location to patch ^(#=!cnt_HitsTotalS! [!cnt_spk!]^)."
+		set "errMSG=Didn't find exactly one location to patch ^(#=!cnt_HitsTotalS! [!spkr_cfgTmp!]^)."
 		goto :ERR
 	)
 
+	::#  enumerate the formula in spkr_cfgTmp.
+	set "spkr_cfgCur=0"
+	set /A spkr_cfgCur+=!spkr_cfgTmp!
+	if !spkr_cfgCur! GTR 0 if !spkr_cfgCur! LSS 16 goto :valid-spkr_cfgCur
+		set ERL=23
+		set "errMSG=Current speaker config nummber isn'T valid?^! ^(!spkr_cfgCur!^)."
+		goto :ERR
+	:valid-spkr_cfgCur
+	set "spkr_cfgCur=!dec2hex:~%spkr_cfgCur%,1!"	
+	
 
 :stepSND
 	::#  Remove the current configured # of speakers from the list of valid #s.
-	set "chan_nmbrs=!chan_nmbrs:%cnt_spkS% =!"
-	set "cnt_spkN="
+	set "spkr_cfgNew="
 	echo[
 	echo[
 	echo[
 	echo[ ############### Surround Sound ###################
 	echo[ #
-	echo[ #   Valheim's current number of used speakers:
-	echo[ #                 %cnt_spkS%
+	echo[ #   Valheim's current speaker configuration:
+	echo[ #           %spkr_cfgCur% = "!spkr_cfg_%spkr_cfgCur%!"
 	echo[ #   Enter one of the valid alternative values
-	echo[ #              %chan_nmbrs:~0,-1%
+	echo[ #   (see "+INFO" above for what the values mean)
+	echo[ #           !spkr_cfgs:%spkr_cfgCur%=_!
 	echo[ #   to modify or nothing to skip this step.
 	echo[ #
-	set /P cnt_spkN= #   New # of speakers:
+	set /P spkr_cfgNew= #   New speaker config value [INPUT]:
 	echo[ #
 	echo[ ##################################################
 	echo[
+	set "spkr_cfgs=!spkr_cfgs:%spkr_cfgCur%=_!"
 
-	if not defined cnt_spkN goto :stepSND_end
-	set /A "cnt_spk=cnt_spkN" 2>NUL
-	if "%cnt_spk%" NEQ "!cnt_spkN!" (
+	if not defined spkr_cfgNew goto :stepSND_end
+	set "spkr_cfgTmp="
+	set /A "spkr_cfgTmp=0x%spkr_cfgNew%" 2>NUL
+	set "spkr_cfgTmp=!dec2hex:~%spkr_cfgTmp%,1!"
+	if /I "%spkr_cfgTmp%" NEQ "!spkr_cfgNew!" (
 		set "ERL=23"
-		set "errMSG=You entered something unsupported ("%cnt_spkN%" vs. "%cnt_spk%")."
+		set "errMSG=You entered something wrong ("%spkr_cfgNew%" NEQ "%spkr_cfgTmp%")."
 		goto :ERR
 	)
-	if "%chan_nmbrs%" EQU "!chan_nmbrs:%cnt_spkN% =!" (
+	if "%spkr_cfgs%" EQU "!spkr_cfgs:%spkr_cfgNew% =!" (
 		set "ERL=24"
-		set "errMSG=You entered an invalid value ("%cnt_spkN%" vs. "%chan_nmbrs:~0,-1%")."
+		set "errMSG=You entered an invalid value ("%spkr_cfgNew%" not in "%spkr_cfgs:~0,-1%")."
 		goto :ERR
 	)
-	%exeSFK% replace "!VH_Path!" -binary /!hex_Speaker:-SpkN-=%cnt_spkS%!/!hex_Speaker:-SpkN-=%cnt_spkN%!/ -yes -dump
+	%exeSFK% replace "!VH_Path!" -binary /!hex_Speaker:-SpkReplace-=%spkr_cfgCur%!/!hex_Speaker:-SpkReplace-=%spkr_cfgNew%!/ -yes -dump
 	set "ERL=%ERRORLEVEL%"
 	if %ERL% NEQ 1 (
 		set "ERL=3%ERL%"
@@ -268,55 +291,10 @@ goto :ERR
 		goto :ERR
 	)
 	set "ERL=0"
+	echo[
+	call :log " Succesfully patched file '%file2mod%' for '!spkr_cfg_%spkr_cfgNew%!'."
 :stepSND_end
 
-
-
-
-:stepPhysInp
-	::# search for m_UsePhysicalKeys=1
-	call :HexFindCount "!VH_Path!" "%hex_PhyInp%1"
-	set "PhysInpUsed=%ERRORLEVEL%"
-	::# search for m_UsePhysicalKeys=0
-	call :HexFindCount "!VH_Path!" "%hex_PhyInp%0"
-	set "PhysInpUsed=%PhysInpUsed%;%ERRORLEVEL%"
-	
-	if "%PhysInpUsed%" NEQ "0;1" if "%PhysInpUsed%" NEQ "1;0" (
-		set /A "ERL=-2000000+1000*!PhysInpUsed:;=+!"
-		set "errMSG=Searching for VH's "physical input state" returned 'false' results: %PhysInpUsed%"
-		goto :ERR
-	)
-	
-	set "inpTypTxt-0='NORMAL' keyboard input (+language/layout)"
-	set "inpTypTxt-1='PHYSICAL' keyboard key-codes"
-	
-	set "usrChoice="
-	echo[
-	echo[
-	echo[
-	echo[ ############### Keyboard Input ###################
-	echo[ #
-	echo[ #   Valheim is currently configured to use 
-	echo[ #     !inpTypTxt-%PhysInpUsed:~0,1%!
-	echo[ #   instead of
-	echo[ #     !inpTypTxt-%PhysInpUsed:~2,1%!.
-	echo[ #
-	echo[ #   Enter anything to switch or nothing to skip.
-	set /P usrChoice= #   [INPUT]:
-	echo[ #
-	echo[ ##################################################
-	echo[
-	if not defined usrChoice goto :stepPhysInp_end
-	
-	%exeSFK% replace "!VH_Path!" -binary /%hex_PhyInp%%PhysInpUsed:~0,1%/%hex_PhyInp%%PhysInpUsed:~2,1%/ -yes -dump
-	set "ERL=%ERRORLEVEL%"
-	if %ERL% NEQ 1 (
-		set "ERL=5%ERL%"
-		set "errMSG=Error patching ".\%path_sub%" (see above for details)."
-		goto :ERR
-	)
-	set "ERL=0"
-:stepPhysInp_end
 
 
 
@@ -380,7 +358,59 @@ goto :ERR
 		)
 	)
 :stepGFX_end
+
+
+
+
+
+
+:stepPhysInp
+	::# search for m_UsePhysicalKeys=1
+	call :HexFindCount "!VH_Path!" "%hex_PhyInp%1"
+	set "PhysInpUsed=%ERRORLEVEL%"
+	::# search for m_UsePhysicalKeys=0
+	call :HexFindCount "!VH_Path!" "%hex_PhyInp%0"
+	set "PhysInpUsed=%PhysInpUsed%;%ERRORLEVEL%"
+	
+	if "%PhysInpUsed%" NEQ "0;1" if "%PhysInpUsed%" NEQ "1;0" (
+		set /A "ERL=-2000000+1000*!PhysInpUsed:;=+!"
+		set "errMSG=Searching for VH's "physical input state" returned 'false' results: %PhysInpUsed%"
+		goto :ERR
+	)
+	
+	set "inpTypTxt-0='NORMAL' keyboard input (+language/layout)"
+	set "inpTypTxt-1='PHYSICAL' keyboard key-codes"
+	
+	set "usrChoice="
+	echo[
+	echo[
+	echo[
+	echo[ ############### Keyboard Input ###################
+	echo[ #
+	echo[ #   Valheim is currently configured to use 
+	echo[ #     !inpTypTxt-%PhysInpUsed:~0,1%!
+	echo[ #   instead of
+	echo[ #     !inpTypTxt-%PhysInpUsed:~2,1%!.
+	echo[ #
+	echo[ #   Enter anything to switch or nothing to skip.
+	set /P usrChoice= #   [INPUT]:
+	echo[ #
+	echo[ ##################################################
+	echo[
+	if not defined usrChoice goto :stepPhysInp_end
+	
+	%exeSFK% replace "!VH_Path!" -binary /%hex_PhyInp%%PhysInpUsed:~0,1%/%hex_PhyInp%%PhysInpUsed:~2,1%/ -yes -dump
+	set "ERL=%ERRORLEVEL%"
+	if %ERL% NEQ 1 (
+		set "ERL=5%ERL%"
+		set "errMSG=Error patching ".\%path_sub%" (see above for details)."
+		goto :ERR
+	)
+	set "ERL=0"
+:stepPhysInp_end
+
 goto :EOFi
+
 
 
 
