@@ -2,9 +2,7 @@
 
 Choose and change Valheim's surround sound configuration to your hearts desire.
 
-Optionally add some GFX configuration options to VH's `boot.config`.
-
-Switch VH's (keyboard) input method between '***normal***' - respecting the users keyboard layout & language - and '***physical***' - using Unity/hardware [key-codes](https://docs.unity3d.com/ScriptReference/KeyCode.html) instead.
+Optionally add some GFX configuration options to VH's `boot.config` and switch VH's (keyboard) input method between '***normal***' - respecting the users keyboard layout & language - and '***physical***' - using Unity/hardware [key-codes](https://docs.unity3d.com/ScriptReference/KeyCode.html) instead.
 
 ---
 
@@ -28,7 +26,18 @@ Switch VH's (keyboard) input method between '***normal***' - respecting the user
 
 ## How it works
 
-This script uses [Swiss File Knife](http://www.stahlworks.com/swiss-file-knife.html) to modify half-a-byte in the file `...\Valheim\valheim_Data\globalgamemanagers` (no extension). It replaces Valheim's default value of "*2*" for Unity's [AudioSpeakerMode](https://docs.unity3d.com/ScriptReference/AudioSpeakerMode.html) with *4*, *5*, *6* or *8* for the respective number of speakers (4, 5, 5.1, 7.1). That's it.
+This script uses [Swiss File Knife](http://www.stahlworks.com/swiss-file-knife.html) to modify half-a-byte in the file `...\Valheim\valheim_Data\globalgamemanagers` (no extension). It replaces Valheim's default value of `2` for Unity's [AudioSpeakerMode](https://docs.unity3d.com/ScriptReference/AudioSpeakerMode.html) with 
+
+| Hex value | Speaker                 |
+| --------- | ----------------------- |
+| 1         | Mono                    |
+| 2         | Stereo                  |
+| 3         | Quadraphonic            |
+| 4         | Surround 5.0            |
+| 5         | Surround 5.1            |
+| 6         | Surround 7.1            |
+| 7         | Prologic *(not tested)* |
+| d         | Surround 7.1.4 *(not tested)* |
 
 **Alternatively one can**
 
@@ -48,7 +57,7 @@ Changing the input method is handled practically the same.
 
 - only works on Windows...
 - every update to VH seems to replace the relevant file. -> need to apply the patch after every update (maybe a *proper* mod using BepInEx would be better?).
-- My hex search strings have worked flawlessly at least with all VH versions between January and November 2023 but there's no guaranty they will keep doing so in the future.
+- *My* hex search strings have worked flawlessly with at least all VH versions between January 2023 and October 2026 but there's no guaranty they will keep doing so in the future.
 
 ---
 
@@ -57,7 +66,7 @@ Changing the input method is handled practically the same.
 The script
 
 - may depend on the OS language to work. So far it seems to work in English and German Windows without modifications.
-- has only been tested a bit on Windows 8.1 and 10.
+- has only been tested on Windows 10.
 
 -> Please give feedback on that ^^.
 
@@ -117,4 +126,4 @@ see [LICENSE.md](../LICENSE.md) in the root folder of this repo.
 
 ---
 
-Tags: mod, modification, patch, hack, 3D
+Tags: mod, modification, patch, hack, 3D, surround sound, spatial audio
